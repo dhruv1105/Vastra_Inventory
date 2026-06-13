@@ -1,0 +1,17 @@
+{
+  "name": "Madhurya Vastra",
+  "short_name": "MV Vastra",
+  "description": "Grace in Every Thread - Inventory Management",
+  "start_url": "/inventory",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#6B3FA0",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'><rect width='512' height='512' fill='%236B3FA0'/><text x='50%' y='50%' font-family='sans-serif' font-size='200' font-weight='bold' fill='%23FFFFFF' text-anchor='middle' dominant-baseline='middle'>MV</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
