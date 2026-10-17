@@ -407,7 +407,7 @@ export default function NewItemPage() {
       </div>
 
       {/* Sticky action bar — sits above the mobile BottomNav (h-16), right of the md sidebar (w-64). */}
-      <div className="fixed left-0 right-0 md:left-20 lg:left-64 bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 z-40 bg-white border-t border-gray-200 px-4 py-3 [@media(max-height:500px)]:py-1.5">
+      <div className="fixed left-0 right-0 md:left-[var(--sidebar-w)] bottom-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:bottom-0 z-40 bg-white border-t border-gray-200 px-4 py-3 [@media(max-height:500px)]:py-1.5">
         {progress && (
           <p className="text-center text-xs text-brand-text-muted mb-2 [@media(max-height:500px)]:mb-1">{progress}</p>
         )}

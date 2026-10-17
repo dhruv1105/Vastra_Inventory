@@ -6,6 +6,26 @@ import BottomNav from "@/components/layout/BottomNav";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
+
+function Shell({ children }: { children: React.ReactNode }) {
+  const { expanded } = useSidebar();
+  return (
+    <div
+      style={{ "--sidebar-w": expanded ? "16rem" : "5rem" } as React.CSSProperties}
+      className="flex flex-col min-h-screen bg-brand-background text-brand-text-primary"
+    >
+      <Header />
+      <div className="flex flex-1">
+        <Sidebar />
+        <main className="flex-1 min-w-0 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:pb-0">
+          {children}
+        </main>
+      </div>
+      <BottomNav />
+    </div>
+  );
+}
 
 export default function ProtectedLayout({
   children,
@@ -37,15 +57,8 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-brand-background text-brand-text-primary">
-      <Header />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="flex-1 min-w-0 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:pb-0">
-          {children}
-        </main>
-      </div>
-      <BottomNav />
-    </div>
+    <SidebarProvider>
+      <Shell>{children}</Shell>
+    </SidebarProvider>
   );
 }
