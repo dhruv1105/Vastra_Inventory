@@ -87,8 +87,20 @@ export default function NewItemPage() {
     []
   );
 
-  const set = <K extends keyof ItemFormData>(key: K, value: ItemFormData[K]) =>
+  const ERROR_FOR: Partial<Record<keyof ItemFormData, keyof Errors>> = {
+    title: "title",
+    wearType: "wearType",
+    sellingPrice: "sellingPrice",
+    sizes: "variants",
+    colorIds: "variants",
+    isOneOfAKind: "variants",
+  };
+
+  const set = <K extends keyof ItemFormData>(key: K, value: ItemFormData[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
+    const errKey = ERROR_FOR[key];
+    if (errKey) setErrors((e) => (e[errKey] ? { ...e, [errKey]: undefined } : e));
+  };
 
   // Lookups: fetched once on mount.
   useEffect(() => {

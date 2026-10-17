@@ -15,7 +15,7 @@ export default function LoginPage() {
   const handleDevLogin = () => {
     // Dev bypass
     signIn({
-      id: "dev-user-001",
+      id: "00000000-0000-0000-0000-000000000001",
       cognitoSub: "dev-sub-001",
       name: "Krishna Sindha",
       phone: "+919876543210",
