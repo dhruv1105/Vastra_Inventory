@@ -19,6 +19,7 @@ import Menu, { MenuHeader, MenuItem } from "@/components/ui/Menu";
 import { useToast } from "@/context/ToastContext";
 import { LogOut } from "lucide-react";
 import ThemeSwitch from "@/components/ui/ThemeSwitch";
+import Intro from "@/components/ui/Intro";
 
 const LIST_TABS = [
   { id: "types", label: "Item types", count: 10 },
@@ -51,14 +52,19 @@ export default function KitPreview() {
   const [tab, setTab] = useState("types");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const { showToast } = useToast();
+  const [intro, setIntro] = useState(false);
 
   return (
-    <main className="mx-auto grid max-w-4xl gap-5 px-4 py-8">
+    <main className="mv-stagger mx-auto grid max-w-4xl gap-5 px-4 py-8">
+      {intro && <Intro onDone={() => setIntro(false)} />}
       <header className="grid gap-1">
         <span className="text-xs font-semibold uppercase tracking-widest text-zari">Redesign R1</span>
         <h1 className="font-display text-3xl text-fg">Kit preview</h1>
         <p className="text-muted">Every shared component, in the current theme. Development only.</p>
-        <ThemeSwitch className="mt-2 w-fit" />
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <ThemeSwitch />
+          <Button size="sm" variant="secondary" onClick={() => setIntro(true)}>Play intro</Button>
+        </div>
       </header>
 
       <Block title="Brand">

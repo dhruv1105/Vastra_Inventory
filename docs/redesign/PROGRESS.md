@@ -23,12 +23,12 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 
 - [x] R0 HTML mock published and approved (v2)
 - [x] R1.1 Tokens as CSS variables + Tailwind mapping; fonts fixed; brand assets + app icons
-- [ ] R1.2 Kit: Button, IconButton
-- [ ] R1.3 Kit: Input, Textarea, Select, Chip
-- [ ] R1.4 Kit: Section, PageHeader, EmptyState, Skeleton
-- [ ] R1.5 Kit: ConfirmDialog, Toast (restyle), Tabs, Menu, Loader
-- [ ] R1.6 Motif SVGs (VineDivider, Lotus, DotCrown) + dark tokens + theme toggle
-- [ ] R1.7 Motion: GSAP, Intro, page entrance stagger, reduced-motion
+- [x] R1.2 Kit: Button, IconButton, Loader (+ dev-only /kit preview page)
+- [x] R1.3 Kit: Field, Input, Textarea, Select (+ *Field wrappers), Chip, ChipGroup
+- [x] R1.4 Kit: Section, PageHeader, EmptyState, Skeleton + Brand (Logo, BrandMark, Vine, Wordmark)
+- [x] R1.5 Kit: ConfirmDialog, Toast (restyle), Tabs, Menu; z-index layer tokens
+- [x] R1.6 Dark mode: ThemeProvider, ThemeSwitch, no-flash boot script, lavender tokens
+- [x] R1.7 Motion: GSAP (lazy), Intro + useIntroOnce, `.mv-stagger` page entrance, reduced-motion
 - [ ] R2 Shell: header title/back, Manage Lists reachable, user menu, collapsed sidebar
 - [ ] R3 Manage Lists on the kit
 - [ ] R4.1 Add Item split into section components (no visual change)
@@ -53,3 +53,14 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
   new violet, Mukta text, `rounded-md/lg` now 10/16px. `package-lock.json` re-synced by
   `npm install` (it was out of sync with package.json — `npm ci` refused).
   Uncommitted — waiting for the owner.
+- 2026-10-17 Committed on branch `redesign/r1` (setup/docs, R1.1). Security review follow-up:
+  theme values validated inside themeToCss; settings.json no longer auto-allows git diff/show;
+  `.env.*` ignored.
+- 2026-10-17 R1.2–R1.7 done, one commit each. Order changes: Loader moved into R1.2 (Button
+  uses it), Brand components into R1.4 (PageHeader/EmptyState use them). Motifs are the real
+  logo crops, not SVG redraws (D6). Following the OS dark setting is behind
+  `FOLLOW_SYSTEM_THEME` (off until R6). Browser-checked on /kit at 390px and 1366px: no
+  horizontal scroll, dialog focus + Esc, menu outside-click, dark survives reload, intro ends by
+  itself and is skipped with reduced motion. `/kit` returns 404 in production.
+  Not wired yet: ThemeSwitch → user menu (R2), Intro → first open (R2) and login (R5),
+  `.mv-stagger` → each screen as it is converted.

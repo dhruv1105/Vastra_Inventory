@@ -43,6 +43,30 @@
   animation: slide-up var(--mv-dur-slow) var(--mv-ease) forwards;
 }
 
+/* Page entrance: children rise in one after another (40ms apart, ≤ 280ms total). Put on the
+   page's content wrapper; content is fully visible once the animation ends. */
+@keyframes rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.mv-stagger > * {
+  animation: rise 0.45s var(--mv-ease) both;
+}
+.mv-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.mv-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.mv-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.mv-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.mv-stagger > *:nth-child(6) { animation-delay: 200ms; }
+.mv-stagger > *:nth-child(7) { animation-delay: 240ms; }
+.mv-stagger > *:nth-child(n + 8) { animation-delay: 280ms; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
