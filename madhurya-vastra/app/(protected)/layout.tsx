@@ -41,7 +41,7 @@ export default function ProtectedLayout({
       <Header />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 pb-20 md:pb-0 overflow-y-auto">
+        <main className="flex-1 min-w-0 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:pb-0">
           {children}
         </main>
       </div>

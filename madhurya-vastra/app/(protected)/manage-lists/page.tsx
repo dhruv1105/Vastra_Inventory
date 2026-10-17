@@ -262,12 +262,12 @@ export default function ManageListsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-brand-secondary/20 px-4 flex gap-1">
+      <div className="bg-white border-b border-brand-secondary/20 px-4 flex gap-1 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab.key
                 ? "border-brand-primary text-brand-primary font-semibold"
                 : "border-transparent text-brand-text-muted hover:text-brand-primary"
@@ -279,7 +279,7 @@ export default function ManageListsPage() {
       </div>
 
       {/* Content */}
-      <div className="p-4 max-w-2xl mx-auto pb-28 md:pb-8">
+      <div className="p-4 md:p-6 max-w-2xl lg:max-w-5xl mx-auto pb-[calc(var(--bottom-nav-h)+2rem)] md:pb-8">
         {activeTab === "types" && (
           <LookupList
             title="Types"

@@ -214,7 +214,7 @@ export default function LookupList({
       )}
 
       {/* List */}
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
         {filtered.map((item) => {
           const isEditing = editingId === item.id;
           const isDeleting = deletingId === item.id;
@@ -223,7 +223,7 @@ export default function LookupList({
             return (
               <div
                 key={item.id}
-                className="bg-white border-2 border-brand-primary/40 rounded-card p-3 shadow-sm space-y-2"
+                className="lg:col-span-2 bg-white border-2 border-brand-primary/40 rounded-card p-3 shadow-sm space-y-2"
               >
                 <div className="flex items-center gap-2">
                   {showColorSwatch && (

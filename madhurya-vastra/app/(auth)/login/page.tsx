@@ -27,17 +27,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-brand-background px-4">
-      <div className="w-full max-w-md bg-white rounded-[12px] shadow-xl border border-gray-100 p-8">
-        <div className="text-center mb-10">
-          <div className="text-6xl mb-4">🪷</div>
+    <div className="min-h-screen flex items-center justify-center bg-brand-background px-4 py-6">
+      <div className="w-full max-w-md bg-white rounded-[12px] shadow-xl border border-gray-100 p-6 sm:p-8 [@media(max-height:500px)]:p-4">
+        <div className="text-center mb-10 [@media(max-height:500px)]:mb-4">
+          <div className="text-6xl mb-4 [@media(max-height:500px)]:text-4xl [@media(max-height:500px)]:mb-2">🪷</div>
           <h1 className="font-serif text-4xl font-bold text-brand-primary mb-2">
             Madhurya Vastra
           </h1>
           <p className="text-brand-text-muted italic">Grace in Every Thread</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 [@media(max-height:500px)]:space-y-3">
           <button className="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-200 hover:border-brand-primary/50 text-brand-text-primary font-medium py-3 px-4 rounded-[8px] transition-all">
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

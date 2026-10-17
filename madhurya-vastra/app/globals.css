@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 :root {
+  --bottom-nav-h: 4rem;
   --background: #ffffff;
   --foreground: #171717;
+}
+
+/* Phone landscape / very short screens: slimmer bottom nav */
+@media (max-height: 500px) {
+  :root {
+    --bottom-nav-h: 3rem;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
