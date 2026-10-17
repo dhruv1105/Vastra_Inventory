@@ -2,10 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Colours, fonts, radii and motion come from the theme (lib/theme) as --mv-* variables.
+   Only layout measurements live here. */
 :root {
   --bottom-nav-h: 4rem;
-  --background: #ffffff;
-  --foreground: #171717;
 }
 
 /* Phone landscape / very short screens: slimmer bottom nav */
@@ -15,17 +15,11 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  :focus-visible {
+    outline: 2px solid rgb(var(--mv-primary-soft));
+    outline-offset: 2px;
   }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
@@ -46,5 +40,16 @@ body {
 }
 
 .animate-slide-up {
-  animation: slide-up 0.25s ease-out forwards;
+  animation: slide-up var(--mv-dur-slow) var(--mv-ease) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
