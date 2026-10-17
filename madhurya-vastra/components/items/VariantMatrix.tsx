@@ -111,7 +111,7 @@ export default function VariantMatrix(p: Props) {
         <tbody>
           {p.sizes.map((s) => (
             <tr key={s}>
-              <td className="p-1 pr-2 whitespace-nowrap font-medium">
+              <td className="p-1 pr-2 whitespace-nowrap font-medium sticky left-0 bg-white">
                 <button
                   type="button"
                   onClick={() => removeSize(s)}

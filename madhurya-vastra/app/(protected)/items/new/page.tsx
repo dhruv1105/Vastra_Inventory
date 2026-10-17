@@ -43,8 +43,16 @@ type Errors = Partial<Record<"title" | "wearType" | "sellingPrice" | "variants",
 const inputCls =
   "w-full px-3 py-2.5 border rounded-input text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary";
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <section className="bg-white rounded-card shadow-sm border border-gray-100 p-4 md:p-6">
+const Section = ({
+  title,
+  children,
+  className = "",
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <section className={`bg-white rounded-card shadow-sm border border-gray-100 p-4 md:p-6 ${className}`}>
     <h2 className="text-lg font-semibold text-brand-primary mb-4">{title}</h2>
     <div className="space-y-5">{children}</div>
   </section>
@@ -249,15 +257,16 @@ export default function NewItemPage() {
   const errBorder = (msg?: string) => (msg ? "border-red-500" : "border-gray-300");
 
   return (
-    <div className="p-4 md:p-6 pb-32 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-brand-primary mb-4">Add Item</h1>
+    <div className="p-4 md:p-6 pb-32 mx-auto max-w-3xl lg:max-w-5xl xl:max-w-6xl">
+      <h1 className="text-2xl md:text-3xl font-bold text-brand-primary mb-4">Add Item</h1>
 
-      <div className="space-y-4">
-        <Section title="Photos">
+      {/* 1 column on phones/tablets, photos|details split on laptops (xl), pairs lower sections from lg */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+        <Section title="Photos" className="xl:col-span-5">
           <ImageUploader images={form.images} onChange={(images) => set("images", images)} />
         </Section>
 
-        <Section title="Basic Details">
+        <Section title="Basic Details" className="xl:col-span-7">
           <div id="field-title">
             <Label htmlFor="title">Title *</Label>
             <input
@@ -327,6 +336,7 @@ export default function NewItemPage() {
           </div>
         </Section>
 
+        <div className="xl:col-span-12 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <Section title="Classification">
           <div>
             <Label>Occasions</Label>
@@ -375,8 +385,9 @@ export default function NewItemPage() {
             </p>
           )}
         </Section>
+        </div>
 
-        <section className="bg-white rounded-card shadow-sm border border-gray-100 p-4 md:p-6">
+        <section className="xl:col-span-12 bg-white rounded-card shadow-sm border border-gray-100 p-4 md:p-6">
           <VariantMatrix
             sizes={form.sizes}
             colorIds={form.colorIds}
@@ -396,14 +407,16 @@ export default function NewItemPage() {
       </div>
 
       {/* Sticky action bar — sits above the mobile BottomNav (h-16), right of the md sidebar (w-64). */}
-      <div className="fixed left-0 right-0 md:left-64 bottom-16 md:bottom-0 z-40 bg-white border-t border-gray-200 px-4 py-3">
-        {progress && <p className="text-center text-xs text-brand-text-muted mb-2">{progress}</p>}
-        <div className="flex gap-3 max-w-3xl mx-auto">
+      <div className="fixed left-0 right-0 md:left-64 bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 z-40 bg-white border-t border-gray-200 px-4 py-3 [@media(max-height:500px)]:py-1.5">
+        {progress && (
+          <p className="text-center text-xs text-brand-text-muted mb-2 [@media(max-height:500px)]:mb-1">{progress}</p>
+        )}
+        <div className="flex gap-3 md:justify-end mx-auto max-w-3xl lg:max-w-5xl xl:max-w-6xl">
           <button
             type="button"
             disabled={submitting}
             onClick={() => submit("draft")}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-input border border-brand-primary text-brand-primary font-medium disabled:opacity-50"
+            className="flex-1 md:flex-none md:min-w-[12rem] flex items-center justify-center gap-2 py-3 [@media(max-height:500px)]:py-2 rounded-input border border-brand-primary text-brand-primary font-medium disabled:opacity-50"
           >
             {submittingStatus === "draft" && <Loader2 className="w-4 h-4 animate-spin" />}
             Save as Draft
@@ -412,7 +425,7 @@ export default function NewItemPage() {
             type="button"
             disabled={submitting}
             onClick={() => submit("active")}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-input bg-brand-primary text-white font-medium disabled:opacity-50"
+            className="flex-1 md:flex-none md:min-w-[12rem] flex items-center justify-center gap-2 py-3 [@media(max-height:500px)]:py-2 rounded-input bg-brand-primary text-white font-medium disabled:opacity-50"
           >
             {submittingStatus === "active" && <Loader2 className="w-4 h-4 animate-spin" />}
             Add to Inventory

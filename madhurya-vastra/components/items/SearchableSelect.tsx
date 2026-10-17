@@ -68,7 +68,7 @@ export default function SearchableSelect({
         placeholder="Type to search…"
         className="w-full px-3 py-2 text-sm border-b border-gray-100 rounded-t-input focus:outline-none"
       />
-      <ul className="max-h-56 overflow-y-auto">
+      <ul className="max-h-[min(14rem,35vh)] overflow-y-auto">
         {filtered.length === 0 && <li className="px-3 py-2 text-sm text-brand-text-muted">No matches</li>}
         {filtered.map((o) => (
           <li key={o.id}>
