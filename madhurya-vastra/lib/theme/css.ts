@@ -49,11 +49,10 @@ function ease(v: string): string {
  * (hex colours, loaded fonts, px radii, integer ms, listed easings), so a theme loaded from the
  * database later cannot inject CSS or markup — an invalid theme throws instead of rendering.
  *
- * Light is the default; dark applies when <html data-theme="dark">. Following the OS dark setting
- * is switched on once every screen uses tokens (redesign R6), so half-converted screens never
- * show light-only colours on a dark page.
+ * Light is the default; dark applies when <html data-theme="dark">. With followSystem the OS
+ * dark setting applies too, unless <html data-theme="light"> was chosen explicitly.
  */
-export function themeToCss(theme: ThemeConfig): string {
+export function themeToCss(theme: ThemeConfig, { followSystem = false }: { followSystem?: boolean } = {}): string {
   const { fonts, motion } = theme;
   const shared =
     `--mv-font-brand:${font(fonts.brand)};` +
@@ -63,8 +62,10 @@ export function themeToCss(theme: ThemeConfig): string {
     `--mv-radius-sm:${radius(theme.radius.sm)};--mv-radius-md:${radius(theme.radius.md)};--mv-radius-lg:${radius(theme.radius.lg)};` +
     `--mv-dur-fast:${ms(motion.fastMs)};--mv-dur-base:${ms(motion.baseMs)};--mv-dur-slow:${ms(motion.slowMs)};` +
     `--mv-ease:${ease(motion.ease)};`;
+  const dark = `${colorVars(theme.colors.dark)}color-scheme:dark`;
   return (
     `:root{${shared}${colorVars(theme.colors.light)}color-scheme:light}` +
-    `:root[data-theme="dark"]{${colorVars(theme.colors.dark)}color-scheme:dark}`
+    (followSystem ? `@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${dark}}}` : "") +
+    `:root[data-theme="dark"]{${dark}}`
   );
 }

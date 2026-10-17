@@ -62,8 +62,11 @@ Brand gradient (headers of login/intro, never behind body text):
 
 Old values `#6B3FA0` / `#9B6FD0` / `#C9A84C` are retired by R1.
 
-**Dark mode:** tokens ship in R1 with a toggle in the user menu (follows the system by default).
-Low priority — it must work and be readable, not be polished screen by screen.
+**Dark mode:** `context/ThemeContext.tsx` (choice saved in localStorage, applied before paint by
+`themeBootScript`) + `components/ui/ThemeSwitch.tsx` (goes in the user menu in R2). Following the
+OS setting is behind `FOLLOW_SYSTEM_THEME` in `lib/theme/presets.ts` — off until R6, so the
+switch offers Light / Dark only. `bg-lavender` / `lavender-glow` stay light in dark mode (logo
+backdrop). Low priority — it must work and be readable, not be polished screen by screen.
 
 ## 3. Typography — Indian feel, readable UI
 

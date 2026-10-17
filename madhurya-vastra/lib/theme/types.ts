@@ -24,6 +24,9 @@ export type ColorTokens = {
   successTint: Hex;
   danger: Hex;
   dangerTint: Hex;
+  /** Lavender backdrop behind the logo (login, intro). Keep it light in dark mode too. */
+  lavender: Hex;
+  lavenderGlow: Hex;
 };
 
 /** Font roles map to fonts loaded in fonts.ts — a theme can only pick from loaded fonts. */

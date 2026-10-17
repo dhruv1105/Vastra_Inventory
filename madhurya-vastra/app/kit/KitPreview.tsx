@@ -18,6 +18,7 @@ import Tabs from "@/components/ui/Tabs";
 import Menu, { MenuHeader, MenuItem } from "@/components/ui/Menu";
 import { useToast } from "@/context/ToastContext";
 import { LogOut } from "lucide-react";
+import ThemeSwitch from "@/components/ui/ThemeSwitch";
 
 const LIST_TABS = [
   { id: "types", label: "Item types", count: 10 },
@@ -57,11 +58,12 @@ export default function KitPreview() {
         <span className="text-xs font-semibold uppercase tracking-widest text-zari">Redesign R1</span>
         <h1 className="font-display text-3xl text-fg">Kit preview</h1>
         <p className="text-muted">Every shared component, in the current theme. Development only.</p>
+        <ThemeSwitch className="mt-2 w-fit" />
       </header>
 
       <Block title="Brand">
         <div className="flex flex-wrap items-center gap-6">
-          <Logo className="w-48" />
+          <div className="rounded-lg bg-lavender p-4"><Logo className="w-48" /></div>
           <BrandMark alt="Madhurya Vastra" />
           <Vine />
           <Wordmark className="text-3xl" />

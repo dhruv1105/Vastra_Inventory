@@ -24,6 +24,8 @@ export const madhuryaTheme: ThemeConfig = {
       successTint: "#E3F2EA",
       danger: "#C0392B",
       dangerTint: "#FBE7E4",
+      lavender: "#F1E9FB",
+      lavenderGlow: "#C9A6F3",
     },
     dark: {
       primary: "#B48CF0",
@@ -43,6 +45,9 @@ export const madhuryaTheme: ThemeConfig = {
       successTint: "#1D3329",
       danger: "#E57368",
       dangerTint: "#3D2220",
+      // Same as light: the violet logo needs a light backdrop.
+      lavender: "#F1E9FB",
+      lavenderGlow: "#C9A6F3",
     },
   },
   // Decision D5: Cormorant matches the logo wordmark; Marcellus reads best for titles.
@@ -62,3 +67,10 @@ export const fontSets: Record<"a" | "b" | "c", FontRoles> = {
 };
 
 export const activeTheme = madhuryaTheme;
+
+/**
+ * Follow the phone/computer dark setting. Off until every screen uses theme tokens (redesign R6):
+ * a half-converted screen would show light-only colours on a dark page. While off, the theme
+ * switch offers Light and Dark only.
+ */
+export const FOLLOW_SYSTEM_THEME = false;

@@ -22,6 +22,7 @@ const config: Config = {
         zari: { DEFAULT: c("zari"), tint: c("zari-tint") },
         success: { DEFAULT: c("success"), tint: c("success-tint") },
         danger: { DEFAULT: c("danger"), tint: c("danger-tint") },
+        lavender: { DEFAULT: c("lavender"), glow: c("lavender-glow") },
         // Legacy names, kept so screens not yet redesigned keep working. Removed in redesign R6.
         brand: {
           primary: c("primary"),
