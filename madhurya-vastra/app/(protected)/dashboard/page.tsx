@@ -1,3 +1,5 @@
+// TODO(roadmap): build the real dashboard once Inventory list and Sales hold enough data —
+// today's sales, low stock, best sellers, stock value. Scope in docs/roadmap.md#dashboard.
 export default function DashboardPage() {
   return (
     <div className="p-4 md:p-6 mx-auto max-w-6xl">
