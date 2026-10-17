@@ -8,6 +8,11 @@ import Loader from "@/components/ui/Loader";
 import Field from "@/components/ui/Field";
 import { SelectField, TextAreaField, TextField } from "@/components/ui/Input";
 import { ChipGroup } from "@/components/ui/Chip";
+import PageHeader from "@/components/ui/PageHeader";
+import Section from "@/components/ui/Section";
+import EmptyState from "@/components/ui/EmptyState";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import { BrandMark, Logo, Vine, Wordmark } from "@/components/ui/Brand";
 
 const OCCASIONS = ["Casual", "Festive", "Wedding", "Party", "Office Wear"].map((v) => ({ value: v, label: v }));
 const WEAR = [
@@ -38,6 +43,43 @@ export default function KitPreview() {
         <h1 className="font-display text-3xl text-fg">Kit preview</h1>
         <p className="text-muted">Every shared component, in the current theme. Development only.</p>
       </header>
+
+      <Block title="Brand">
+        <div className="flex flex-wrap items-center gap-6">
+          <Logo className="w-48" />
+          <BrandMark alt="Madhurya Vastra" />
+          <Vine />
+          <Wordmark className="text-3xl" />
+        </div>
+      </Block>
+
+      <Block title="Page header">
+        <PageHeader
+          eyebrow="New stock"
+          title="Add Item"
+          subtitle="Fill what you know now; you can save as a draft and finish later."
+          back={{ href: "/inventory", label: "Inventory" }}
+          action={<Button icon={<Plus />}>Add item</Button>}
+        />
+      </Block>
+
+      <Section title="Photos" number={1} hint="First photo is the cover" id="photos">
+        <p className="text-muted">A Section is the one card on a screen.</p>
+      </Section>
+      <Section title="Price overrides" collapsible defaultOpen={false} actions={<Button size="sm" variant="secondary" icon={<Plus />}>Size</Button>}>
+        <p className="text-muted">Collapsible content.</p>
+      </Section>
+
+      <EmptyState title="Your shelves are empty" action={<Button icon={<Plus />}>Add first item</Button>}>
+        Add your first saree, kurti or lehenga. It will show here with its sizes, colours and stock.
+      </EmptyState>
+      <EmptyState compact eyebrow="Comes after Sales" title="Your shop at a glance">
+        Today&apos;s sales, items running low and best sellers will appear here.
+      </EmptyState>
+
+      <Block title="Skeleton">
+        <SkeletonRows rows={3} />
+      </Block>
 
       <Block title="Buttons">
         <div className="flex flex-wrap items-center gap-3">
