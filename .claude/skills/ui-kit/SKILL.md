@@ -113,7 +113,9 @@ Lenis / Vanta / React Bits stay out of the staff app (storefront, phase 2).
 
 - Raw hex/rgb in `className` or `style` (except data: a lookup colour swatch's `hexCode`).
 - Tailwind palette classes (`gray-*`, `red-*`, `purple-*` …) — use tokens.
-- Arbitrary values (`rounded-[12px]`, `text-[10px]`) — add a token.
+- Arbitrary values (`rounded-[12px]`, `text-[10px]`, `z-[60]`) — add a token. Stacking uses
+  `z-nav | z-menu | z-toast | z-dialog`. Only exception: `calc()` with `env(safe-area-inset-*)`
+  or `--bottom-nav-h` for phone safe areas.
 - `window.confirm` / `alert` — use `ConfirmDialog` / toast.
 - A button, input, chip, card or empty state written inline in a page — use or extend the kit.
 - Card inside a card. Motif behind body text.

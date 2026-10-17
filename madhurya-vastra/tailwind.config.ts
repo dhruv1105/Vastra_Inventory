@@ -53,6 +53,8 @@ const config: Config = {
         base: "var(--mv-dur-base)",
         slow: "var(--mv-dur-slow)",
       },
+      // Stacking layers, lowest to highest. Use these names, never numbers.
+      zIndex: { nav: "40", menu: "50", toast: "60", dialog: "70" },
       transitionTimingFunction: {
         brand: "var(--mv-ease)",
       },

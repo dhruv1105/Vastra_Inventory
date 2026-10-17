@@ -13,6 +13,18 @@ import Section from "@/components/ui/Section";
 import EmptyState from "@/components/ui/EmptyState";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { BrandMark, Logo, Vine, Wordmark } from "@/components/ui/Brand";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import Tabs from "@/components/ui/Tabs";
+import Menu, { MenuHeader, MenuItem } from "@/components/ui/Menu";
+import { useToast } from "@/context/ToastContext";
+import { LogOut } from "lucide-react";
+
+const LIST_TABS = [
+  { id: "types", label: "Item types", count: 10 },
+  { id: "colors", label: "Colours", count: 18 },
+  { id: "occasions", label: "Occasions", count: 10 },
+  { id: "tags", label: "Tags", count: 17 },
+];
 
 const OCCASIONS = ["Casual", "Festive", "Wedding", "Party", "Office Wear"].map((v) => ({ value: v, label: v }));
 const WEAR = [
@@ -35,6 +47,9 @@ export default function KitPreview() {
   const [title, setTitle] = useState("Lavender Georgette Saree");
   const [wear, setWear] = useState<string | null>(null);
   const [occ, setOcc] = useState<string[]>(["Festive"]);
+  const [tab, setTab] = useState("types");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const { showToast } = useToast();
 
   return (
     <main className="mx-auto grid max-w-4xl gap-5 px-4 py-8">
@@ -76,6 +91,43 @@ export default function KitPreview() {
       <EmptyState compact eyebrow="Comes after Sales" title="Your shop at a glance">
         Today&apos;s sales, items running low and best sellers will appear here.
       </EmptyState>
+
+      <Block title="Tabs, menu, dialog, toast">
+        <Tabs label="Lists" idPrefix="kit-lists" tabs={LIST_TABS} value={tab} onChange={setTab} />
+        <div id={`kit-lists-panel-${tab}`} role="tabpanel" aria-labelledby={`kit-lists-tab-${tab}`} className="text-muted">
+          Showing the {LIST_TABS.find((t) => t.id === tab)?.label.toLowerCase()} list.
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="danger" icon={<Trash2 />} onClick={() => setConfirmOpen(true)}>Delete “Crepe”</Button>
+          <Button variant="secondary" onClick={() => showToast("Saved", "success")}>Success toast</Button>
+          <Button variant="secondary" onClick={() => showToast("Could not reach the server. Check your connection and try again.", "error")}>Error toast</Button>
+          <Menu
+            label="Account menu"
+            trigger={<span className="font-display text-lg">K</span>}
+            triggerClassName="grid h-10 w-10 place-items-center rounded-full border border-line bg-tint text-primary"
+          >
+            <MenuHeader>
+              <div className="font-semibold">Krishna Sindha</div>
+              <span className="mt-1 inline-block rounded-full bg-zari-tint px-2 text-xs font-semibold text-zari">Owner</span>
+            </MenuHeader>
+            <MenuItem tone="danger" icon={<LogOut />} onSelect={() => showToast("Signed out", "info")}>Sign out</MenuItem>
+          </Menu>
+        </div>
+        <ConfirmDialog
+          open={confirmOpen}
+          title="Delete “Crepe”?"
+          confirmLabel="Delete"
+          cancelLabel="Keep it"
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={async () => {
+            await new Promise((r) => setTimeout(r, 600));
+            setConfirmOpen(false);
+            showToast("Deleted “Crepe”", "success", { action: { label: "Undo", onClick: () => showToast("Restored “Crepe”", "info") } });
+          }}
+        >
+          It disappears from the choices on Add Item. Items already tagged “Crepe” keep it.
+        </ConfirmDialog>
+      </Block>
 
       <Block title="Skeleton">
         <SkeletonRows rows={3} />
