@@ -169,3 +169,14 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
    activity-log screen must hide those from sellers. Store them, or leave cost out of the log?
 6. **Removed photos** are soft-deleted (row kept, file kept on disk) until the S3 step, which can
    clean up. OK?
+
+## Progress
+
+- **Step 1 done (2026-10-18).** `GET /api/items/[id]` now returns wear type, one-of-a-kind,
+  created/updated by (id + name) and at, and `version` (`updated_at::text`, microseconds kept), via
+  `lib/items.ts` (`loadItemFull` / `loadItem`, shareable with transactions). Cost is filtered in one
+  place, `lib/cost.ts` (`forRole` / `stripCost`, whole-word "cost"/"margin" keys at any depth): sellers
+  now also lose variant `costPriceOverride`, which the old route didn't return to anyone. `types/index.ts`
+  `Item` matches the response. Tests: 3 cost-filter unit tests, 6 route tests (401 without SQL, 400/404,
+  seller has no cost anywhere, owner has item and variant cost, version and names, live rows only).
+  Live check on Postgres: owner sees cost 3000 and override 2800; the seller response contains no "cost".

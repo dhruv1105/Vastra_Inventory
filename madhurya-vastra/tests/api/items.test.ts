@@ -84,28 +84,68 @@ describe("POST /api/items — one-of-a-kind flag", () => {
 });
 
 describe("GET /api/items/[id]", () => {
-  beforeEach(() => {
-    reset(null);
-  });
-  const withItem = () => results.push({ match: "FROM items i", rows: [{ id: ID, title: "x", costPrice: 1200, sellingPrice: 1999 }] });
+  beforeEach(() => reset(null));
+  const get = () => item.GET(req("GET", `/api/items/${ID}`), ctx(ID));
+  const withItem = () => {
+    results.push({
+      match: "FROM items i",
+      rows: [
+        {
+          id: ID, title: "x", costPrice: 1200, sellingPrice: 1999, isOneOfAKind: false, status: "active",
+          version: "2026-10-18 06:12:00.123456+00",
+          createdBy: { id: OWNER.id, name: "Owner" }, updatedBy: { id: SELLER.id, name: "Seller" },
+        },
+      ],
+    });
+    results.push({ match: "FROM variants v", rows: [{ id: "v1", size: "M", quantity: 2, sellingPriceOverride: 1799, costPriceOverride: 900 }] });
+  };
 
-  it("without a session → 401", async () => {
-    expect((await item.GET(req("GET", `/api/items/${ID}`), ctx(ID))).status).toBe(401);
+  it("without a session → 401, runs no SQL", async () => {
+    expect((await get()).status).toBe(401);
+    expect(calls).toHaveLength(0);
   });
 
-  it("as a seller: no cost price in the response", async () => {
+  it("malformed id → 400, unknown → 404", async () => {
+    reset(OWNER);
+    expect((await item.GET(req("GET", "/api/items/nope"), ctx("nope"))).status).toBe(400);
+    expect((await get()).status).toBe(404);
+  });
+
+  it("as a seller: no cost anywhere — not the item's, not a variant's", async () => {
     reset(SELLER);
     withItem();
-    const json = await (await item.GET(req("GET", `/api/items/${ID}`), ctx(ID))).json();
+    const json = await (await get()).json();
     expect(json.data).not.toHaveProperty("costPrice");
+    expect(json.data.variants[0]).not.toHaveProperty("costPriceOverride");
+    expect(json.data.variants[0].sellingPriceOverride).toBe(1799);
+    expect(JSON.stringify(json)).not.toMatch(/cost/i);
     expect(json.data.sellingPrice).toBe(1999);
   });
 
-  it("as the owner: cost price included", async () => {
+  it("as the owner: item and variant cost included", async () => {
     reset(OWNER);
     withItem();
-    const json = await (await item.GET(req("GET", `/api/items/${ID}`), ctx(ID))).json();
+    const json = await (await get()).json();
     expect(json.data.costPrice).toBe(1200);
+    expect(json.data.variants[0].costPriceOverride).toBe(900);
+  });
+
+  it("returns the concurrency version (exact text) and who added / last changed it", async () => {
+    reset(SELLER);
+    withItem();
+    const { data } = await (await get()).json();
+    expect(data.version).toBe("2026-10-18 06:12:00.123456+00");
+    expect(data.createdBy).toEqual({ id: OWNER.id, name: "Owner" });
+    expect(data.updatedBy).toEqual({ id: SELLER.id, name: "Seller" });
+    expect(sqlLike("FROM items i")[0][0]).toContain('i.updated_at::text AS "version"');
+  });
+
+  it("only live variants and photos", async () => {
+    reset(OWNER);
+    withItem();
+    await get();
+    expect(sqlLike("FROM variants v")[0][0]).toContain("v.deleted_at IS NULL");
+    expect(sqlLike("FROM images")[0][0]).toContain("deleted_at IS NULL");
   });
 });
 

@@ -49,19 +49,28 @@ export type ItemFormData = {
   status: ItemStatus
 }
 
+/** A person shown on an item: who added it / last changed it. */
+export type PersonRef = { id: string; name: string }
+
+/** GET /api/items/[id]. Cost fields are present for the owner only (lib/cost.ts). */
 export type Item = {
   id: string
   title: string
   description: string | null
   itemTypeId: string | null
   itemTypeName: string | null
-  wearType: WearType
-  costPrice: number | null
-  sellingPrice: number
+  wearType: WearType | null
   status: ItemStatus
+  isOneOfAKind: boolean
+  sellingPrice: number
+  costPrice?: number | null
   captionText: string | null
   createdAt: string
-  createdBy: string
+  createdBy: PersonRef | null
+  updatedAt: string
+  updatedBy: PersonRef | null
+  /** Concurrency token: send it back on every change; a stale one gets 409. */
+  version: string
   occasions: LookupItem[]
   tags: LookupItem[]
   variants: VariantDetail[]
@@ -76,6 +85,8 @@ export type VariantDetail = {
   colorHex: string | null
   quantity: number
   sellingPriceOverride: number | null
+  costPriceOverride?: number | null
+  displayOrder: number
 }
 
 export type ImageDetail = {
