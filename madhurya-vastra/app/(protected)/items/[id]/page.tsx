@@ -6,6 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Button, { LinkButton } from "@/components/ui/Button";
 import Skeleton from "@/components/ui/Skeleton";
+import { ApiError, apiFetch } from "@/lib/api-client";
 
 // Placeholder until item detail / edit (roadmap step 2). It shows which item was opened, so a
 // tap from the inventory list lands somewhere real; the details and editing come next.
@@ -20,19 +21,14 @@ export default function ItemPage({ params }: { params: { id: string } }) {
 
   const load = useCallback(() => {
     setState("loading");
-    fetch(`/api/items/${encodeURIComponent(params.id)}`)
-      .then(async (res) => {
-        if (res.status === 401) {
-          window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`);
-          return;
-        }
-        // 400 (not an item id) and 404 (deleted or never existed) read the same to staff.
-        if (res.status === 400 || res.status === 404) return setState("missing");
-        if (!res.ok) return setState("error");
-        setItem((await res.json()).data);
+    apiFetch<ItemSummary>(`/api/items/${encodeURIComponent(params.id)}`)
+      .then((data) => {
+        setItem(data);
         setState("ready");
       })
-      .catch(() => setState("error"));
+      // 400 (not an item id) and 404 (deleted or never existed) read the same to staff.
+      // A 401 never gets here: apiFetch has already sent the browser to /login.
+      .catch((err) => setState(err instanceof ApiError && (err.status === 400 || err.status === 404) ? "missing" : "error"));
   }, [params.id]);
 
   useEffect(load, [load]);

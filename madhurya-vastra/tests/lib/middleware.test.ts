@@ -30,9 +30,9 @@ describe("middleware (Edge page gate)", () => {
     expect(passes(visit("/items/d5eed000-0000-4000-8000-000000000001", `${name}=anything`))).toBe(true);
   });
 
-  it("signed in on /login or / → /inventory", () => {
-    expect(redirectTo(visit("/login", "mv.session_token=x"))).toBe("http://localhost:3000/inventory");
-    expect(redirectTo(visit("/", "mv.session_token=x"))).toBe("http://localhost:3000/inventory");
+  it("a cookie on /login is let through: the login page checks the real session (no bounce loop)", () => {
+    expect(passes(visit("/login", "mv.session_token=x"))).toBe(true);
+    expect(passes(visit("/login/clear?next=%2Finventory", "mv.session_token=x"))).toBe(true);
   });
 
   it("other cookies (another app's better-auth, an empty value) don't count", () => {

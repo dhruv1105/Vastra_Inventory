@@ -107,6 +107,9 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 5. **Phone first.** Every screen works at 390×844, 844×390, 768×1024 and 1366×768 with no
    horizontal scroll.
 6. **Validate on the server.** Client checks are convenience; every route validates its input.
+   Screens call our API only through `apiFetch` (`lib/api-client.ts`): a 401 sends the user to
+   `/login?next=<this page>`, other failures throw `ApiError` with the server's sentence. All new
+   screens must use it — never a bare `fetch` to `/api`.
 7. **Money is exact.** Rupees shown as `₹1,999`; never float arithmetic on prices.
 8. **Stay in scope.** A redesign task changes UI only; any API/DB change is asked first and
    listed in the summary.
@@ -120,8 +123,9 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before mark as sold.
-- **Tests cover API routes, helpers, middleware, paging and session checks** (111 Vitest tests + 8
-  Postgres tests via `npm run test:db`); no UI tests yet.
+- **Tests cover API routes, helpers, middleware, paging and session checks** (134 Vitest tests + 8
+  Postgres tests via `npm run test:db`); no UI tests yet. Older screens (Staff, Manage Lists, Add
+  Item) still use their own fetch helpers; move them to `apiFetch` when they are next changed.
 
 ## Vocabulary
 

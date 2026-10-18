@@ -12,6 +12,7 @@ import InventoryCard, { type InventoryLayout } from "@/components/inventory/Inve
 import InventorySkeleton, { listClass } from "@/components/inventory/InventorySkeleton";
 import { cn } from "@/lib/cn";
 import { SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
+import { apiFetch, isAbortError } from "@/lib/api-client";
 
 /** The server's generic failure sentence (GET /api/items 500). The error card's title already says it. */
 const LOAD_FAILED = "Could not load the inventory. Try again.";
@@ -62,28 +63,16 @@ function LayoutToggle({ value, onChange }: { value: InventoryLayout; onChange: (
 /** Wait this long after the last keystroke before searching. */
 const SEARCH_DELAY_MS = 300;
 
-/** GET /api/items. Throws an Error with a sentence the screen can show; AbortError passes through. */
-async function fetchPage(q: string, cursor: string | null, signal: AbortSignal): Promise<InventoryPage> {
+/** GET /api/items through the shared client (a 401 goes to /login and comes back here). */
+function fetchPage(q: string, cursor: string | null, signal: AbortSignal): Promise<InventoryPage> {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   if (cursor) params.set("cursor", cursor);
-  let res: Response;
-  try {
-    const qs = params.toString(); // (URLSearchParams.size is too new for older phone browsers)
-    res = await fetch(`/api/items${qs ? `?${qs}` : ""}`, { signal });
-  } catch (err) {
-    if ((err as Error).name === "AbortError") throw err;
-    throw new Error("Could not reach the server. Check your connection and try again.");
-  }
-  const body = await res.json().catch(() => ({}));
-  if (res.status === 401) {
-    window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-  }
-  if (!res.ok) throw new Error(body.error || LOAD_FAILED);
-  return body.data as InventoryPage;
+  const qs = params.toString(); // (URLSearchParams.size is too new for older phone browsers)
+  return apiFetch<InventoryPage>(`/api/items${qs ? `?${qs}` : ""}`, { signal });
 }
 
-const isAbort = (err: unknown) => (err as Error)?.name === "AbortError";
+const isAbort = isAbortError;
 
 function InventoryList() {
   const router = useRouter();

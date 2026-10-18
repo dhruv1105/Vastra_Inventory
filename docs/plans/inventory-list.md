@@ -278,13 +278,14 @@ or colours until the flag is turned off, as an explicit action in the edit UI.
   layout change (commit "Kit: 44 px touch area…").
 - ~~Build warning from the Edge middleware~~ — fixed: `middleware.ts` reads `request.cookies` with
   the names in `lib/auth/cookie.ts` and no longer imports better-auth (commit "Middleware: …").
-- **Open — stale cookie leaves a blank page (pre-existing since A2).** With a session cookie that
-  exists but is no longer valid (expired after 30 days, revoked by a password reset, or fake), the
-  protected layout sends the user to /login and the middleware sends anyone with a cookie away from
-  /login, so they land on a blank /inventory. No data is shown (every API call is 401). Same
-  behaviour before and after the middleware change. Proposed fix: the middleware only gates
-  protected pages; the "already signed in → leave /login" redirect moves to the login page's
-  server code, which checks the real session.
+- ~~Stale cookie leaves a blank page (pre-existing since A2)~~ — fixed: the middleware only guards
+  protected pages; /login checks the real session on the server (signed in → `?next`; cookie present
+  but not valid → `/login/clear`, which removes the auth cookies and shows the form with the same
+  `?next`). `/login/clear` re-checks the session, so a link to it can't sign out a valid user. The
+  protected layout and the shared `apiFetch` (`lib/api-client.ts`) send a 401 to
+  `/login?next=<page + query>`. Browser-checked: fake cookie, expired session and a password reset
+  (sessions deleted) each land on the login form with no session cookie left; signing in returns
+  to the original page (after a password reset, via the new-password screen).
 - The `(created_at, id)` index was left out on purpose (owner, 2026-10-18).
 
 ## Running the Postgres test on the Docker stack

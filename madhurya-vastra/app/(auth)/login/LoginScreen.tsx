@@ -8,14 +8,13 @@ import { normalizePhone } from "@/lib/auth/staff.mjs";
 import { Logo } from "@/components/ui/Brand";
 import Button from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Input";
+import { safeNext } from "@/lib/auth/next";
 
 // Sign-in for staff (owner, sellers). Accounts are added by the owner; there is no sign-up.
 // Google (auth A5) and text-message codes (A6) appear only when configured (see page.tsx).
 
 const DEV = { login: "98765 43210", password: "madhurya-dev" };
 
-/** Only same-site paths, so ?next= can't send people to another website. */
-const safeNext = (next: string | null) => (next && next.startsWith("/") && !next.startsWith("//") ? next : "/inventory");
 
 export type SignInOptions = { google: boolean; otp: boolean };
 

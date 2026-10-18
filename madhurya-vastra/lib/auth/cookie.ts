@@ -18,3 +18,12 @@ export const SESSION_COOKIE_NAMES = [
 export function hasSessionCookie(cookies: { get(name: string): { value: string } | undefined }): boolean {
   return SESSION_COOKIE_NAMES.some((name) => !!cookies.get(name)?.value);
 }
+
+/**
+ * Every auth cookie better-auth may have set for this app (session token, cached session data,
+ * "don't remember me"), in all name forms — cleared together when the session is no longer valid.
+ */
+export const AUTH_COOKIE_NAMES = [
+  ...SESSION_COOKIE_NAMES,
+  ...["session_data", "dont_remember"].flatMap((n) => [`${COOKIE_PREFIX}.${n}`, `__Secure-${COOKIE_PREFIX}.${n}`]),
+];
