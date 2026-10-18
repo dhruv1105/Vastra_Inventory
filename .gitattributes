@@ -1,0 +1,26 @@
+# Line endings: LF everywhere, including Windows checkouts.
+# The app folder is bind-mounted into Linux containers (docker-compose.dev.yml), so every text file
+# runs or is read there: a CRLF in a .sh file breaks it ("bad interpreter" / "$'\r': command not
+# found"), and CRLF in .mjs/.sql/.yml/.env.example can break parsing too.
+* text=auto eol=lf
+
+# Scripts and container files: always text, always LF (listed explicitly so detection can't miss them).
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+.dockerignore   text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.mjs           text eol=lf
+*.sql           text eol=lf
+.env.example    text eol=lf
+.npmrc          text eol=lf
+
+# Binary: never touch.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
