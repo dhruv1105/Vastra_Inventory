@@ -22,13 +22,13 @@ RUN npm run build
 FROM base AS runner
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 RUN addgroup -S app && adduser -S app -G app
-COPY --from=build /app/public ./public
+COPY --from=build --chown=app:app /app/public ./public
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
-COPY --from=build /app/db ./db
-COPY --from=build /app/scripts ./scripts
+COPY --from=build --chown=app:app /app/db ./db
+COPY --from=build --chown=app:app /app/scripts ./scripts
 # The migrator runs before the server and is not part of the traced standalone bundle.
-COPY --from=build /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=build --chown=app:app /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
 RUN mkdir -p public/uploads && chown app:app public/uploads
 USER app
 EXPOSE 3000
