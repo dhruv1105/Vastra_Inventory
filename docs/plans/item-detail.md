@@ -205,3 +205,13 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   `lib/activity.ts` fails. Route tests: 401 without SQL, 400, seller keeps selling-price changes but
   loses every cost change, owner sees all, scoped + bounded query. The 3777.77 leak test now covers
   the history too (and a seller still sees the selling price change); it fails without the filter.
+- **Step 4 done (2026-10-18).** `lib/item-status.ts` (`changeItemStatus`): one transaction — row
+  locked (`FOR UPDATE OF i`), version compared in SQL, rule applied, `updated_at`/`updated_by` bumped,
+  `item.published|archived|restored|deleted` logged with before/after. Routes: `POST
+  /api/items/[id]/publish` (owner + seller), `/archive` and `/restore` and `DELETE /api/items/[id]`
+  (owner only; sellers get 403 before any SQL). Rules: publish draft → active; archive anything not
+  archived; restore archived → sold_out when live stock is 0, else active; delete drafts only
+  (soft), "Archive this item instead" otherwise. Body `{ version }`; missing/malformed → 400
+  "This page is out of date". 25 route tests + a Postgres flow test (stale token 409, restore by
+  stock, delete drafts only, actions logged; a token 0.5 ms older is refused).
+  **Open:** an item saved with no variants has stock 0, so restore makes it Sold out (rule as given).
