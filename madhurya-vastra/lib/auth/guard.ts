@@ -30,17 +30,22 @@ function sameOrigin(request: Request): boolean {
  *   if (g.response) return g.response;
  *   … g.user.id …
  *
- * 401: not signed in. 403: signed in but not allowed, account turned off, or a write from
- * another site.
+ * 401: not signed in. 403: signed in but not allowed, account turned off, a new password still
+ * to be chosen, or a write from another site.
  */
-export async function requireUser(request: Request, options: { role?: Role } = {}): Promise<Guarded> {
+export async function requireUser(
+  request: Request,
+  options: { role?: Role; /** Only the change-password route: reachable while a new password is pending. */ allowPasswordChangePending?: boolean } = {},
+): Promise<Guarded> {
   if (!SAFE.has(request.method) && !sameOrigin(request)) {
     return deny(403, "This request came from another site and was blocked.");
   }
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) return deny(401, "Sign in to continue.");
-  const u = session.user as typeof session.user & { role?: string; banned?: boolean | null };
+  const u = session.user as typeof session.user & { role?: string; banned?: boolean | null; mustChangePassword?: boolean | null };
   if (u.banned) return deny(403, "This account is turned off. Ask the owner to turn it back on.");
+  // After a temporary password, nothing else works until a new password is chosen.
+  if (u.mustChangePassword && !options.allowPasswordChangePending) return deny(403, "Choose a new password first.");
   const role: Role = u.role === "owner" ? "owner" : "seller";
   if (options.role === "owner" && role !== "owner") return deny(403, "Only the owner can do this.");
   return { user: { id: u.id, name: u.name, role } };

@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
+import ChangePasswordForm from "@/components/account/ChangePasswordForm";
+import { Logo } from "@/components/ui/Brand";
+import { useToast } from "@/context/ToastContext";
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { expanded } = useSidebar();
@@ -65,9 +68,39 @@ export default function ProtectedLayout({
     return null; // Will redirect in useEffect
   }
 
+  // Signed in with a temporary password: choose a new one before anything else
+  // (the API refuses other requests until then).
+  if (user.mustChangePassword) {
+    return <FirstPassword />;
+  }
+
   return (
     <SidebarProvider>
       <Shell>{children}</Shell>
     </SidebarProvider>
+  );
+}
+
+function FirstPassword() {
+  const { user, refresh, signOut } = useAuth();
+  const { showToast } = useToast();
+  return (
+    <div className="grid min-h-dvh place-items-center bg-canvas px-4 py-8">
+      <div className="grid w-full max-w-sm gap-4 rounded-lg bg-surface p-6 shadow-xl">
+        <Logo className="mx-auto w-40" />
+        <h1 className="text-center font-accent text-2xl font-semibold text-fg">Welcome, {user?.name?.split(" ")[0]}</h1>
+        <p className="text-center text-muted">You signed in with a temporary password. Choose your own to continue.</p>
+        <ChangePasswordForm
+          firstTime
+          onDone={async () => {
+            await refresh();
+            showToast("Password saved", "success");
+          }}
+        />
+        <button type="button" onClick={signOut} className="text-center text-sm text-muted underline underline-offset-2 hover:text-fg">
+          Not you? Sign out
+        </button>
+      </div>
+    </div>
   );
 }

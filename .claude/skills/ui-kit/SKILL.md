@@ -163,7 +163,7 @@ header title — add a screen there, never in one place only. Items: Inventory �
 Sales · Dashboard · **Manage Lists** ("Lists" on the phone bar). Five bottom-nav items is the
 maximum. Active item: tint + primary text + a small zari dot. On phones the header shows the
 screen name and `PageHeader` hides its visible title (kept for screen readers). Account menu
-(avatar): name, role label, Theme switch, Sign out.
+(avatar): name, role label, Staff (owner), Change password, Theme switch, Sign out.
 
 ## 10. Words
 

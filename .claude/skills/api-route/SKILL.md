@@ -52,7 +52,9 @@ return 404/403 unless `NODE_ENV === "development"` (see `app/kit/page.tsx`).
 | POST item-types (from Add Item) | ✓ | ✓ |
 | POST other lookups, PATCH / DELETE any lookup | 403 | ✓ |
 | POST items | ✓ (cost prices dropped) | ✓ |
-| /api/auth/admin/* (staff) | 403 | ✓ |
+| /api/staff, /api/staff/[id] (add, reset password, role, turn off/on) | 403 | ✓ |
+| /api/account/password (own password; allowed while a new one is pending) | ✓ | ✓ |
+| /api/auth/admin/* (better-auth, called by /api/staff) | 403 | ✓ |
 
 Lookup routes share `lib/lookups.ts` — add a list by binding a config, not by copying a route.
 

@@ -5,7 +5,7 @@ import { vi } from "vitest";
 
 export const ORIGIN = "http://localhost:3000";
 
-export type FakeUser = { id: string; name: string; role: "owner" | "seller"; banned?: boolean };
+export type FakeUser = { id: string; name: string; role: "owner" | "seller"; banned?: boolean; mustChangePassword?: boolean };
 export const OWNER: FakeUser = { id: "00000000-0000-0000-0000-0000000000a1", name: "Owner", role: "owner" };
 export const SELLER: FakeUser = { id: "00000000-0000-0000-0000-0000000000b2", name: "Seller", role: "seller" };
 
@@ -23,9 +23,19 @@ function run(sql: string, params?: unknown[]) {
   return Promise.resolve({ rows: hit ? hit.rows : [], rowCount: hit ? hit.rows.length : 0 });
 }
 
-vi.mock("@/lib/auth/server", () => ({
-  auth: { api: { getSession: vi.fn(async () => (state.user ? { user: state.user, session: { id: "s1" } } : null)) } },
-}));
+/** better-auth server API: getSession reads `state.user`; staff calls are recorded fakes. */
+export const authApi = {
+  getSession: vi.fn(async () => (state.user ? { user: state.user, session: { id: "s1" } } : null)),
+  createUser: vi.fn(async ({ body }: { body: { name: string } }) => ({ user: { id: "33333333-3333-3333-3333-333333333333", name: body.name } })),
+  setUserPassword: vi.fn(async () => ({ status: true })),
+  revokeUserSessions: vi.fn(async () => ({ success: true })),
+  setRole: vi.fn(async () => ({ user: {} })),
+  banUser: vi.fn(async () => ({ user: {} })),
+  unbanUser: vi.fn(async () => ({ user: {} })),
+  changePassword: vi.fn(async () => ({ token: "t" })),
+};
+
+vi.mock("@/lib/auth/server", () => ({ auth: { api: authApi } }));
 
 vi.mock("@/lib/db", () => ({
   query: vi.fn((sql: string, params?: unknown[]) => run(sql, params)),
@@ -36,6 +46,7 @@ export function reset(user: FakeUser | null) {
   state.user = user;
   calls.length = 0;
   results.length = 0;
+  Object.values(authApi).forEach((f) => f.mockClear());
 }
 
 export function req(method: string, path: string, opts: { body?: unknown; origin?: string | null } = {}) {

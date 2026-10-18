@@ -111,3 +111,15 @@ Customer accounts, two-factor auth, audit screen, email verification flows.
   Vitest 3.2.4 (Vitest 5 needs Node 22): 47 route tests in `tests/api/`. Live-checked as owner and
   seller on Postgres (statuses, created_by = real user, cost_price null for the seller's item,
   activity rows) and in the browser for both roles.
+- **A4 done (2026-10-18).** Staff screen (`/staff`, account menu → Staff, owner only): list with
+  role, "Turned off" and "New password pending" badges; Add person (name, mobile, optional email,
+  Seller/Owner) returns a readable temporary password shown once with Copy; ⋯ menu: Reset password
+  (new temporary password, signs them out everywhere), Make owner / Make seller, Turn account
+  off / on — all confirmed. Rules on the server (`/api/staff`, `/api/staff/[id]`): owner only, no
+  acting on yourself, always one active owner, never deleted, every change in activity_log.
+  First sign-in with a temporary password shows "Choose your own to continue"; until then every
+  API answers 403 "Choose a new password first." (`/api/account/password` excepted). Change
+  password is in the account menu for everyone (signs out other devices). 61 Vitest tests.
+  Browser-checked end to end with an owner and a new seller: add → temp password → forced change →
+  app works; reset → seller's next call 401; role both ways; turned off → "This account is turned
+  off…"; turned on again; staff list on a phone without horizontal scroll.

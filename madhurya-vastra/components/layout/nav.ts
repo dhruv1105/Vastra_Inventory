@@ -18,7 +18,15 @@ export const NAV: NavItem[] = [
   { href: "/manage-lists", name: "Manage Lists", short: "Lists", icon: ListChecks },
 ];
 
+/** Screens reached from the account menu, not the bars (titles for the phone header). */
+export const MENU_PAGES: Pick<NavItem, "href" | "name">[] = [{ href: "/staff", name: "Staff" }];
+
 /** The nav item a path belongs to (also matches child paths such as /inventory/123). */
 export function activeNav(pathname: string): NavItem | undefined {
   return NAV.find((n) => pathname === n.href || pathname.startsWith(n.href + "/"));
+}
+
+/** Title for the phone header: a nav item or a menu page. */
+export function pageTitle(pathname: string): string {
+  return activeNav(pathname)?.name ?? MENU_PAGES.find((p) => pathname === p.href || pathname.startsWith(p.href + "/"))?.name ?? "";
 }
