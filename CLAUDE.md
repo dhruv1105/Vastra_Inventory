@@ -26,13 +26,14 @@ Full brief: [docs/brief.md](docs/brief.md).
 | App | Next.js 14 (App Router) + React 18 + TypeScript (strict) |
 | Styling | Tailwind CSS 3 with brand tokens in `tailwind.config.ts` |
 | Icons | `lucide-react` |
-| Database | PostgreSQL via `pg` (raw parameterised SQL, `lib/db.ts`) |
+| Database | PostgreSQL 16 in Docker; schema + migrations with **Drizzle** (`db/schema.ts`); existing routes use raw parameterised SQL via `query()`, new code may use the typed `db` client (`lib/db.ts`) |
+| Dev stack | Docker Compose (`docker-compose.yml` + `docker-compose.dev.yml`), helper scripts in `scripts/` |
 | PWA | `next-pwa` (disabled in development) |
 | Auth | Placeholder — dev bypass login only; Cognito code is a stub, to be replaced |
 
-Planned, not installed yet — never import them until added on purpose: zod, Drizzle (migrations),
-Vitest, Auth.js/better-auth, GSAP (redesign R1.7: intro animations only), Lenis/React Bits
-(storefront only, phase 2).
+Installed on purpose: GSAP (intro only, loaded lazily), Drizzle ORM + drizzle-kit.
+Planned, not installed yet — never import them until added on purpose: zod, Vitest,
+Auth.js/better-auth, Lenis/React Bits (storefront only, phase 2).
 
 Brand: logo violet `#6D37C0`, Indian-feel typography and logo motifs on every screen,
 light + dark — see the `ui-kit` skill.
@@ -42,13 +43,18 @@ light + dark — see the `ui-kit` skill.
 ```
 Vastra_Inventory/            git root
   CLAUDE.md                  this file
-  docs/                      brief, decisions, redesign plan, screens.pdf (UI baseline)
+  docs/                      brief, decisions, roadmap, theming, redesign plan + mock, screens.pdf
+  scripts/                   dev-up, dev-down, fresh, db, logs, check (Docker dev stack)
+  docker-compose*.yml        base stack + dev overlay; settings in .env (see .env.example)
   assets/                    logo files
   .claude/                   rules, skills, agents, commands
   madhurya-vastra/           THE Next.js app — run every npm command from here
     app/(auth)/              login
     app/(protected)/         staff screens: inventory, items/new, manage-lists, sales, dashboard
-    app/api/                 route handlers (items, lookups/*, auth/sync-user, seed, migrate, health)
+    app/api/                 route handlers (items, lookups/*, auth/sync-user, health)
+    app/kit/                 dev-only preview of the shared kit (404 in production)
+    db/                      Drizzle schema.ts, generated migrations/, re-runnable SQL seeds/
+    scripts/db.mjs           migrate | seed | status (used by Docker and npm db:* scripts)
     components/layout/       Header, Sidebar, BottomNav
     components/items/        Add Item parts: ImageUploader, VariantMatrix, ChipSelect, SearchableSelect
     components/lookups/      LookupList (Manage Lists)
@@ -57,16 +63,30 @@ Vastra_Inventory/            git root
     context/ hooks/ lib/ types/
 ```
 
-## Commands (run from `madhurya-vastra/`)
+## Commands
+
+Always use the Docker dev stack (from the repo root) — don't start separate Postgres or Node
+servers; they won't share the `vastra_db-data` volume.
 
 ```bash
-npm run dev            # http://localhost:3000 — needs DATABASE_URL in .env.local
+./scripts/dev-up.sh          # Postgres + app on http://localhost:3000; migrate + seed on start
+./scripts/dev-down.sh        # stop, keep data      ./scripts/fresh.sh   wipe + restart (asks)
+./scripts/db.sh migrate|seed|status|shell
+./scripts/logs.sh app
+./scripts/check.sh [build]   # tsc + lint (+ build) inside the container
+```
+
+From `madhurya-vastra/` (host node_modules installed):
+
+```bash
 npx tsc --noEmit       # type check — run after EVERY change
 npm run lint           # eslint (next/core-web-vitals)
 npm run build          # production build — run before calling a phase done
+npm run db:generate -- --name <change>   # after editing db/schema.ts; review the SQL
 ```
 
-Dev data: `POST /api/seed` (lookups + seed owner), dev login via "Dev Bypass Login" on /login.
+Dev login: "Dev Bypass Login" on /login (the seeded owner). Login is held in memory only — a
+full page reload signs out until real auth lands; navigate inside the app when testing.
 
 ## Top rules (full list: [.claude/rules.md](.claude/rules.md))
 
@@ -88,8 +108,8 @@ Dev data: `POST /api/seed` (lookups + seed owner), dev login via "Dev Bypass Log
 
 ## Known gaps (do not "fix" silently — they have their own planned steps)
 
-- **No schema in the repo.** Tables were created outside it; `/api/migrate` holds ad-hoc ALTERs.
-  Planned: export schema → Drizzle migrations.
+- **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
+  disk in development, S3 in production — before hosting.
 - **No server-side auth.** Routes trust `userId` from the request body; `sync-user` creates
   every new user as `owner`. Planned: Auth.js/better-auth after the redesign.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before Sales.

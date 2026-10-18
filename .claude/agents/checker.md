@@ -18,7 +18,9 @@ Run every command from `madhurya-vastra/`.
 - Build: `npm run build` — only when the caller asks (slow; needs env vars, may fail on
   missing `DATABASE_URL` only if a page queries at build time — report that separately).
 
-If `node_modules` is missing, say so and stop — do not run `npm install` unless the caller asked.
+If `node_modules` is missing on the host, use the Docker stack instead (from the repo root):
+`./scripts/check.sh` (tsc + lint) or `./scripts/check.sh build`. Do not run `npm install`
+unless the caller asked.
 
 ## Baseline mode
 

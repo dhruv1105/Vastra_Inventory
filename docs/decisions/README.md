@@ -18,6 +18,11 @@ Format: date · decision · why · what it rules out.
 - **2026-10-17 · Brand follows the logo.** Logo violet `#6D37C0` + petal gradient, lavender tints,
   a small gold "zari" accent; Indian-feel typography and logo motifs on every screen, staff
   included. Dark mode supported, low priority.
+- **2026-10-18 · Docker dev stack + Drizzle.** Postgres 16 and the app run in Docker Compose
+  (modelled on the AGD setup); the schema lives in `db/schema.ts` and Drizzle generates and
+  applies migrations, so the typed query builder can be adopted gradually. Seeds stay plain
+  re-runnable SQL. Money is `numeric(12,2)` rupees. The database is development-only for now;
+  hosting (AWS or Vercel) is undecided — photos move behind a storage helper (disk / S3) first.
 - **2026-10-17 · Fonts: Cormorant (wordmark), Marcellus (titles), Eczar (accent), Mukta (UI).**
   Cormorant matches the logo wordmark; Marcellus reads best across screens. Sets B/C kept as presets.
 - **2026-10-17 · The look is data, not code.** Palette, fonts, radii and motion come from a typed

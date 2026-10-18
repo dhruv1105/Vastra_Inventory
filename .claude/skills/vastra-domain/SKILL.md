@@ -9,9 +9,14 @@ description: >
 
 # Domain model — Madhurya Vastra
 
-Source of truth today: the SQL in `app/api/**/route.ts` and `app/api/seed`, `app/api/migrate`.
-**There is no schema file in the repo** — columns below are read from that SQL. Do not invent
-columns; grep the routes.
+Source of truth: **`madhurya-vastra/db/schema.ts`** (Drizzle), applied by the migrations in
+`db/migrations/`. It was rebuilt from the routes' SQL on 2026-10-18. Do not invent columns;
+read the schema.
+
+**Changing the database:** edit `db/schema.ts` → `npm run db:generate -- --name <change>` →
+read the generated SQL → `./scripts/db.sh migrate`. Never edit an applied migration. Data the
+app needs to start (lookup lists) goes in `db/seeds/*.sql`, written to be safe to re-run
+(`ON CONFLICT DO NOTHING`); development-only rows go in `db/seeds/dev/`.
 
 ## 1. Tables (as used by the code)
 
@@ -45,14 +50,14 @@ Every table carries `created_by`, `created_at`, `updated_by`, `updated_at`; look
 
 | Topic | Today | Target |
 |---|---|---|
-| Schema | Outside the repo; ad-hoc `/api/migrate` | `pg_dump --schema-only` baseline → Drizzle migrations; `/api/migrate` retired |
+| Queries | Raw SQL via `query()` in routes | New code may use the typed `db` client; migrate routes gradually |
 | Stock | `variants.quantity` overwritten | `stock_movements` ledger (purchase, sale, return, adjustment, reservation); quantity derived |
-| Money | Column type unknown, JS numbers | Integer paise or `NUMERIC(12,2)`; formatting via one helper |
+| Money | `numeric(12,2)` rupees (decided); routes read `::float8` | One formatting helper; never float arithmetic for totals |
 | Images | Local `public/uploads`, base64 in JSON | Object storage behind one storage helper; multipart upload |
 | Users | Every new user `owner` | New users get no access until the owner assigns a role; customers a separate role |
 | SKU / barcode | none | Per-variant SKU + barcode for billing |
 
-## 4. Seed lists (from `app/api/seed`)
+## 4. Seed lists (`db/seeds/010_lookups.sql`)
 
 Types: Saree, Kurti, Lehenga, Dupatta, Suit Set, Dress, Top, Skirt, Palazzo Set, Sharara Set.
 Occasions: Casual, Festive, Wedding, Party, Office Wear, Formal, Daily Wear, Traditional,

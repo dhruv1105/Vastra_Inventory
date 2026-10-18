@@ -31,5 +31,7 @@ live preview and contrast checks, and a schedule table for festival themes.
 
 ## Others already noted
 - Real authentication (Auth.js / better-auth) — right after the redesign.
-- Schema in the repo + Drizzle migrations; stock-movement ledger before Sales.
+- Stock-movement ledger before Sales; SKU / barcode per variant.
+- Photo storage helper (local disk in development, S3 in production) before hosting.
+- Hosting: AWS (App Runner/ECS + RDS + S3, using the Docker image) or Vercel (+ Neon/RDS + S3).
 - Customer storefront + payments (phase 2) — see [decisions](decisions/README.md).

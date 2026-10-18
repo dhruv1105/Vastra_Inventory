@@ -34,10 +34,11 @@ Type on the client: `ApiResponse<T>` in `types/index.ts`. Status codes: 400 inva
 6. Log the error server-side only in development; respond with a generic 500 sentence.
    Never return `error.message` from Postgres (`auth/sync-user` does today — don't copy).
 
-## 3. Dev-only routes
+## 3. No tooling routes
 
-`/api/seed`, `/api/migrate` return 403 unless `NODE_ENV === "development"`. Keep that guard on
-any new tooling route.
+Schema changes and seed data never go through API routes — use `db/schema.ts` + migrations and
+`db/seeds/` (the old `/api/seed` and `/api/migrate` were retired). A dev-only page or route must
+return 404/403 unless `NODE_ENV === "development"` (see `app/kit/page.tsx`).
 
 ## 4. Known gaps — do not copy into new routes
 
