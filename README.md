@@ -50,6 +50,13 @@ npm run dev
 3. Put the ID and secret in `.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, then
    `./scripts/dev-up.sh`. The "Continue with Google" button appears; with empty values it stays hidden.
 
+**Sign-in codes by text message** ("Get a code by text message instead" on the login screen):
+- Development: on by default — the code is printed in the app log (`./scripts/logs.sh app`, look
+  for `[sms:dev]`).
+- Production: set `SMS_PROVIDER=msg91`, `MSG91_AUTH_KEY` and `MSG91_OTP_TEMPLATE_ID` (an OTP template
+  approved under TRAI DLT). Without them the option is hidden. Only phones that belong to an active
+  staff account are ever texted.
+
 ## Changing the database
 
 1. Edit `madhurya-vastra/db/schema.ts`.

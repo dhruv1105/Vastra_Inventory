@@ -29,7 +29,7 @@ Full brief: [docs/brief.md](docs/brief.md).
 | Database | PostgreSQL 16 in Docker; schema + migrations with **Drizzle** (`db/schema.ts`); existing routes use raw parameterised SQL via `query()`, new code may use the typed `db` client (`lib/db.ts`) |
 | Dev stack | Docker Compose (`docker-compose.yml` + `docker-compose.dev.yml`), helper scripts in `scripts/` |
 | PWA | `next-pwa` (disabled in development) |
-| Auth | better-auth (`lib/auth/server.ts`): sessions in Postgres, phone/email + password, roles owner/seller; owner adds staff (no public sign-up). Being rolled out in phases A1–A6 |
+| Auth | better-auth (`lib/auth/server.ts`): sessions in Postgres; phone/email + password, Google and text-message codes (each on only when configured); roles owner/seller; owner adds staff on /staff (no public sign-up); every API route uses `requireUser()` (`lib/auth/guard.ts`) |
 
 Installed on purpose: GSAP (intro only, loaded lazily), Drizzle ORM + drizzle-kit.
 Planned, not installed yet — never import them until added on purpose: zod, Vitest,

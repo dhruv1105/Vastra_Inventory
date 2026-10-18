@@ -30,7 +30,7 @@ generated from a typed `ThemeConfig` in `madhurya-vastra/lib/theme/` — see
 live preview and contrast checks, and a schedule table for festival themes.
 
 ## Others already noted
-- Real authentication (Auth.js / better-auth) — right after the redesign.
+- ~~Real authentication~~ — done 2026-10-18 (better-auth, docs/plans/auth.md).
 - Stock-movement ledger before Sales; SKU / barcode per variant.
 - Photo storage helper (local disk in development, S3 in production) before hosting.
 - Hosting: AWS (App Runner/ECS + RDS + S3, using the Docker image) or Vercel (+ Neon/RDS + S3).

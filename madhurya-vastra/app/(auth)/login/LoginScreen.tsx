@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LogIn, Wand2 } from "lucide-react";
+import { ArrowLeft, LogIn, MessageSquareText, Send, ShieldCheck, Wand2 } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 import { normalizePhone } from "@/lib/auth/staff.mjs";
 import { Logo } from "@/components/ui/Brand";
@@ -17,7 +17,7 @@ const DEV = { login: "98765 43210", password: "madhurya-dev" };
 /** Only same-site paths, so ?next= can't send people to another website. */
 const safeNext = (next: string | null) => (next && next.startsWith("/") && !next.startsWith("//") ? next : "/inventory");
 
-export type SignInOptions = { google: boolean };
+export type SignInOptions = { google: boolean; otp: boolean };
 
 /** Google redirects back with ?error=… when it can't sign someone in. */
 const googleError = (code: string | null) =>
@@ -32,6 +32,101 @@ const GoogleIcon = () => (
   </svg>
 );
 
+/** Sign in with a 6-digit code sent by text message (auth A6). Only existing staff phones get a text. */
+function CodeSignIn({ onBack, onSignedIn }: { onBack: () => void; onSignedIn: () => void }) {
+  const [phoneInput, setPhoneInput] = useState("");
+  const [phone, setPhone] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const send = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError(null);
+    const p = normalizePhone(phoneInput);
+    if (!p) return setError("Enter your 10-digit mobile number, e.g. 98765 43210.");
+    setBusy(true);
+    const result = await authClient.phoneNumber.sendOtp({ phoneNumber: p });
+    setBusy(false);
+    if (result.error) {
+      if (result.error.status === 429) return setError("Too many codes asked for. Wait a few minutes, then try again.");
+      return setError(result.error.message ?? "The code couldn't be sent. Sign in with your password instead.");
+    }
+    setPhone(p);
+    setCode("");
+  };
+
+  const verify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!/^\d{6}$/.test(code)) return setError("Enter the 6 digits from the text message.");
+    setBusy(true);
+    const result = await authClient.phoneNumber.verify({ phoneNumber: phone!, code });
+    if (result.error) {
+      setBusy(false);
+      if (result.error.code === "BANNED_USER") return setError(result.error.message ?? "This account is turned off. Ask the owner to turn it back on.");
+      if (result.error.status === 429 || /attempt/i.test(result.error.message ?? "")) return setError("Too many wrong codes. Ask for a new code.");
+      return setError("That code isn't right or has expired. Check it, or ask for a new one.");
+    }
+    onSignedIn();
+  };
+
+  return (
+    <div className="grid gap-4">
+      {phone === null ? (
+        <form onSubmit={send} noValidate className="grid gap-3">
+          <TextField
+            id="otp-phone"
+            label="Mobile number"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="98765 43210"
+            help="If this number belongs to a staff account, we'll text it a 6-digit code."
+            value={phoneInput}
+            onChange={(e) => {
+              setPhoneInput(e.target.value);
+              setError(null);
+            }}
+          />
+          {error && <p role="alert" className="rounded-md bg-danger-tint px-3 py-2 text-sm text-danger">{error}</p>}
+          <Button type="submit" fullWidth icon={<Send />} loading={busy}>
+            Text me a code
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={verify} noValidate className="grid gap-3">
+          <TextField
+            id="otp-code"
+            label={`Code sent to ${phone}`}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder="••••••"
+            help="The code works for 5 minutes."
+            className="text-center text-lg tracking-widest"
+            value={code}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, ""));
+              setError(null);
+            }}
+          />
+          {error && <p role="alert" className="rounded-md bg-danger-tint px-3 py-2 text-sm text-danger">{error}</p>}
+          <Button type="submit" fullWidth icon={<ShieldCheck />} loading={busy}>
+            Sign in
+          </Button>
+          <Button variant="ghost" onClick={() => void send()} disabled={busy}>
+            Send a new code
+          </Button>
+        </form>
+      )}
+      <Button variant="ghost" icon={<ArrowLeft />} onClick={onBack}>
+        Use my password instead
+      </Button>
+    </div>
+  );
+}
+
 function LoginForm({ options }: { options: SignInOptions }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -39,6 +134,12 @@ function LoginForm({ options }: { options: SignInOptions }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(() => googleError(params.get("error")));
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"password" | "code">("password");
+
+  const goNext = () => {
+    router.replace(safeNext(params.get("next")));
+    router.refresh();
+  };
 
   const withGoogle = async () => {
     setError(null);
@@ -73,9 +174,17 @@ function LoginForm({ options }: { options: SignInOptions }) {
       // Same message for unknown account and wrong password, so it can't be used to find accounts.
       return setError("That phone/email and password don't match. Check them, or ask the owner to reset your password.");
     }
-    router.replace(safeNext(params.get("next")));
-    router.refresh();
+    goNext();
   };
+
+  if (mode === "code") {
+    return (
+      <div className="mv-rise-late grid w-full max-w-sm gap-4 self-start rounded-lg bg-surface p-6 shadow-xl lg:self-center lg:shadow-none">
+        <h1 className="text-center font-accent text-2xl font-semibold text-fg">Sign in with a code</h1>
+        <CodeSignIn onBack={() => setMode("password")} onSignedIn={goNext} />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={submit} noValidate className="mv-rise-late grid w-full max-w-sm gap-4 self-start rounded-lg bg-surface p-6 shadow-xl lg:self-center lg:shadow-none">
@@ -127,6 +236,12 @@ function LoginForm({ options }: { options: SignInOptions }) {
       <Button type="submit" fullWidth icon={<LogIn />} loading={busy}>
         Sign in
       </Button>
+
+      {options.otp && (
+        <Button variant="ghost" icon={<MessageSquareText />} onClick={() => setMode("code")}>
+          Get a code by text message instead
+        </Button>
+      )}
 
       <p className="text-center text-sm text-muted">Forgot your password? Ask the owner to reset it.</p>
 

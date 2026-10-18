@@ -1,6 +1,6 @@
 # Authentication: plan
 
-Status: **Approved, in progress** · 2026-10-18 · Branch: `feat/auth` (from `redesign/r2`)
+Status: **Done (A1–A6)** · 2026-10-18 · Branch: `feat/auth` (from `redesign/r2`)
 
 ## Brief
 
@@ -130,3 +130,18 @@ Customer accounts, two-factor auth, audit screen, email verification flows.
   the README. Checked: no button without keys; with placeholder keys the button goes to
   accounts.google.com with the right client id, callback URL and account chooser; the error
   message shows. **Not verified:** a real Google round trip — needs real keys.
+- **A6 done (2026-10-18).** Sign-in by text-message code: "Get a code by text message instead" on
+  the login screen (shown only when an SMS provider is configured). SMS drivers behind one
+  interface (`lib/auth/sms.ts`): console (development only, code in the app log) and MSG91 OTP API
+  (`SMS_PROVIDER=msg91`, `MSG91_AUTH_KEY`, `MSG91_OTP_TEMPLATE_ID`; 10 s timeout; the code and full
+  number are never logged). `sendOtpToStaff` texts only phones of active staff accounts; other
+  numbers get the same response and no text. Codes last 5 minutes, 3 wrong tries invalidate the
+  code, sending is limited to 3 per 5 minutes. 68 Vitest tests. Browser-checked with the console
+  sender: real phone → code → signed in; unknown phone → same screen, nothing sent, code rejected;
+  wrong codes → "Too many wrong codes", after which the real code no longer works.
+  **Not verified:** a real MSG91 send — needs an account, DLT registration and keys.
+
+## Left for later
+- Real Google and MSG91 round trips once keys exist (A5, A6).
+- Behind a proxy in production: trust its client-IP header for rate limits (see A2 note).
+- Password reset by email / text without the owner (needs an email sender or OTP reset flow).

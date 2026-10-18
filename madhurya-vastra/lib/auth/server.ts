@@ -7,7 +7,8 @@ import { accounts, rateLimits, sessions, users, verifications } from "@/db/schem
 import { hashPassword, verifyPassword } from "./password.mjs";
 import { normalizePhone } from "./staff.mjs";
 import { ac, owner, seller } from "./roles";
-import { smsSender } from "./sms";
+import { smsEnabled } from "./sms";
+import { sendOtpToStaff } from "./otp";
 
 // Server-side auth (better-auth). Plan and decisions: docs/plans/auth.md.
 // - No public sign-up: the owner adds staff (Staff screen) or scripts/create-owner.mjs.
@@ -29,7 +30,7 @@ const googleKeys =
 
 /** Which sign-in methods the login screen offers. Read at request time on the server. */
 export function signInOptions() {
-  return { google: !!googleKeys };
+  return { google: !!googleKeys, otp: smsEnabled() };
 }
 
 export const auth = betterAuth({
@@ -91,7 +92,7 @@ export const auth = betterAuth({
   plugins: [
     phoneNumber({
       // Sign-up on verification stays off: OTP only signs in phones that already belong to staff.
-      sendOTP: ({ phoneNumber: to, code }) => smsSender().sendOtp(to, code),
+      sendOTP: ({ phoneNumber: to, code }) => sendOtpToStaff(to, code),
       phoneNumberValidator: (value) => normalizePhone(value) === value,
       allowedAttempts: 3,
     }),
