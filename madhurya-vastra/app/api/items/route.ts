@@ -6,6 +6,7 @@ import { pool, query } from "@/lib/db";
 import { requireUser } from "@/lib/auth/guard";
 import { LIST_STATUSES, ONE_SIZE, PAGE_SIZE, SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
 import { decodeCursor, encodeCursor, toPrefixQuery } from "@/lib/inventory-query";
+import { DUPLICATE_VARIANT, isDuplicateVariantError, normalizeVariantSizes } from "@/lib/variants";
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -200,6 +201,10 @@ export async function POST(request: Request) {
       }
     }
   }
+  // One spelling per size ("xl" → "XL"); each size + colour once (the DB enforces it too).
+  if (normalizeVariantSizes(variants as VariantBody[]) === "duplicate") {
+    return NextResponse.json({ error: DUPLICATE_VARIANT }, { status: 400 });
+  }
   if (typeof isOneOfAKind !== "boolean") {
     return NextResponse.json({ error: "Invalid one-of-a-kind flag" }, { status: 400 });
   }
@@ -353,6 +358,9 @@ export async function POST(request: Request) {
       try {
         fs.rmdirSync(writtenDir);
       } catch {}
+    }
+    if (isDuplicateVariantError(error)) {
+      return NextResponse.json({ error: DUPLICATE_VARIANT }, { status: 400 });
     }
     if (process.env.NODE_ENV === "development") {
       console.error("POST /api/items failed:", error);

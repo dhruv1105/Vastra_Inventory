@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/cn";
 import type { ItemFormData, LookupItem } from "@/types";
 import type { Errors } from "./form";
+import { normalizeSize, sizeKey } from "@/lib/sizes";
 
 const QUICK_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
 
@@ -40,8 +41,8 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
   const q = form.quantities;
 
   const addSize = (raw: string) => {
-    const size = raw.trim();
-    if (!size || form.sizes.some((s) => s.toLowerCase() === size.toLowerCase())) return;
+    const size = normalizeSize(raw); // "xl" → "XL", one spelling per size (lib/sizes.ts)
+    if (!size || form.sizes.some((s) => sizeKey(s) === sizeKey(size))) return;
     set("sizes", [...form.sizes, size]);
     setCustomSize(null);
   };

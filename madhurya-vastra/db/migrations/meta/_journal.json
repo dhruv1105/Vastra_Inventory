@@ -36,6 +36,13 @@
       "when": 1792299803619,
       "tag": "0004_items_one_of_a_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792307132322,
+      "tag": "0005_variants_live_unique",
+      "breakpoints": true
     }
   ]
 }

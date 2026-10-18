@@ -95,7 +95,9 @@ try {
   else if (command === "status") await runStatus();
   else throw new Error(`Unknown command "${command}". Use migrate, seed or status.`);
 } catch (err) {
-  console.error(err.message);
+  // Drizzle wraps database errors as "Failed query: <the whole SQL>"; the database's own message
+  // (e.g. a migration's RAISE EXCEPTION explaining what to fix) is in err.cause. Show that first.
+  console.error(err.cause?.message ? `${err.cause.message}\n\n(${err.message.split("\n")[0].slice(0, 120)} …)` : err.message);
   process.exitCode = 1;
 } finally {
   await client.end().catch(() => {});

@@ -188,3 +188,13 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   the owner view. Version token: an opaque string everywhere (documented on `Item.version`); a guard
   test fails on `new Date(…version…)` / `Date.parse(…version…)`; a Postgres test shows two updates
   0.5 ms apart get different versions and the old one no longer matches `updated_at = $1::timestamptz`.
+- **Step 2 done (2026-10-18).** Migration `0005_variants_live_unique` (hand-written; `db/schema.ts`
+  points to it): aborts listing live duplicates; drops an old full UNIQUE (item_id, size, color_id)
+  as a constraint or plain index, found by columns; creates `variants_live_unique` on (item_id,
+  lower(trimmed, collapsed size), color_id) NULLS NOT DISTINCT WHERE deleted_at IS NULL.
+  `lib/sizes.ts` (normalizeSize / sizeKey) and `lib/variants.ts` (normalizeVariantSizes, duplicate
+  message, 23505 mapping) used by POST /api/items and the size picker. `scripts/db.mjs` now prints
+  the database's own message first when a migration fails. Postgres migration test (scratch
+  databases): duplicate abort + message, old constraint/index dropped, live duplicate refused
+  (case/spacing, no-colour = no-colour), removed size re-added. Applied to the dev seed with no
+  duplicates. 155 tests + 14 Postgres tests pass.

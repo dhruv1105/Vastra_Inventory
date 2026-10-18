@@ -49,6 +49,25 @@ describe("POST /api/items", () => {
   });
 });
 
+describe("POST /api/items — sizes", () => {
+  beforeEach(() => reset(OWNER));
+  const okInsert = () => results.push({ match: "INSERT INTO items", rows: [{ id: ID, title: "x", status: "active" }] });
+
+  it("normalises sizes before saving (\"xl\" → \"XL\", \" free  size \" → \"Free Size\")", async () => {
+    okInsert();
+    const res = await items.POST(req("POST", "/api/items", { body: body({ variants: [{ size: "xl", colorId: null, quantity: 1 }, { size: " free  size ", colorId: ID, quantity: 1 }] }) }));
+    expect(res.status).toBe(201);
+    expect(sqlLike("INSERT INTO variants").map(([, p]) => p![1])).toEqual(["XL", "Free Size"]);
+  });
+
+  it("the same size twice for one colour (any case/spacing) → 400 with a clear message, runs no SQL", async () => {
+    const res = await items.POST(req("POST", "/api/items", { body: body({ variants: [{ size: "M", colorId: ID, quantity: 1 }, { size: " m ", colorId: ID, quantity: 2 }] }) }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/Each size and colour can appear only once/);
+    expect(calls).toHaveLength(0);
+  });
+});
+
 describe("POST /api/items — one-of-a-kind flag", () => {
   beforeEach(() => reset(OWNER));
   const oneOff = (extra: object = {}) =>

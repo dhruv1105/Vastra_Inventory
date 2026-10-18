@@ -188,6 +188,9 @@ export const variants = pgTable(
     check("variants_selling_override_check", sql`${t.sellingPriceOverride} >= 0`),
     check("variants_cost_override_check", sql`${t.costPriceOverride} >= 0`),
     index("variants_item_idx").on(t.itemId, t.displayOrder).where(liveOnly),
+    // Also: variants_live_unique — one live variant per item + size (case/spacing ignored) + colour,
+    // NULLS NOT DISTINCT. Hand-written in migrations/0005_variants_live_unique.sql (drizzle-kit can't
+    // express it); keep lib/sizes.ts sizeKey() in step with its size expression.
     index("variants_color_idx").on(t.colorId),
   ],
 );
