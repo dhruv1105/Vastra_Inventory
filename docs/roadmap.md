@@ -10,6 +10,9 @@ Done: UI redesign (R0–R6), real authentication (A1–A6).
 1. **Inventory list** — `/inventory` shows items with cover photo, price, stock and status;
    search and load-more. ← *current step*
 2. **Item detail / edit** — `/items/[id]`: view an item and change it.
+   Rule: a one-of-a-kind item (`items.is_one_of_a_kind`) can't gain sizes or colours until the
+   flag is turned off, and turning it off is an explicit action in the edit UI (never a side
+   effect of adding a size or colour). The server enforces it too.
 3. **Caption templates + sharing** — build a caption from the item (`items.caption_text`) and
    share photos + caption to **WhatsApp and Instagram**. **Mandatory in phase 1.**
 4. **S3 photo storage + hosting** — one storage helper (local disk in development, S3 in

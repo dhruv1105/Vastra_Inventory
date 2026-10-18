@@ -1,4 +1,5 @@
 import type { ItemFormData, VariantInput, WearType } from "@/types";
+import { ONE_SIZE } from "@/lib/inventory";
 
 export const TITLE_MAX = 150;
 export const DESC_MAX = 500;
@@ -92,7 +93,7 @@ export function margin(form: ItemFormData): { diff: number; pct: number } | null
 
 export function buildVariants(form: ItemFormData): VariantInput[] {
   if (form.isOneOfAKind) {
-    return [{ size: "One Size", colorId: null, quantity: 1, sellingPriceOverride: null, costPriceOverride: null }];
+    return [{ size: ONE_SIZE, colorId: null, quantity: 1, sellingPriceOverride: null, costPriceOverride: null }];
   }
   const out: VariantInput[] = [];
   for (const size of form.sizes) {
@@ -126,5 +127,6 @@ export function buildPayload(form: ItemFormData, status: "active" | "draft") {
     variants: buildVariants(form),
     images: form.images.map((i, idx) => ({ base64: i.base64, mimeType: i.mimeType, displayOrder: idx, altText: i.altText })),
     status,
+    isOneOfAKind: form.isOneOfAKind,
   };
 }

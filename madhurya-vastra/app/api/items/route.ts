@@ -4,7 +4,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { pool, query } from "@/lib/db";
 import { requireUser } from "@/lib/auth/guard";
-import { LIST_STATUSES, PAGE_SIZE, SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
+import { LIST_STATUSES, ONE_SIZE, PAGE_SIZE, SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
 import { decodeCursor, encodeCursor, toPrefixQuery } from "@/lib/inventory-query";
 
 const MAX_IMAGES = 8;
@@ -82,8 +82,7 @@ export async function GET(request: Request) {
               img.cdn_url AS "coverUrl", img.alt_text AS "coverAlt",
               COALESCE(v.total, 0)::int AS "totalStock",
               v.n::int AS "variantCount",
-              -- One-of-a-kind = Add Item's single "One Size" variant without a colour (see the plan).
-              (v.n = 1 AND v.one_size) AS "isOneOfAKind",
+              i.is_one_of_a_kind AS "isOneOfAKind",
               i.created_at::text AS "cursorAt"
        FROM items i
        LEFT JOIN item_types t ON t.id = i.item_type_id
@@ -94,8 +93,7 @@ export async function GET(request: Request) {
          LIMIT 1
        ) img ON true
        LEFT JOIN LATERAL (
-         SELECT SUM(quantity) AS total, COUNT(*) AS n, MIN(selling_price_override) AS min_override,
-                bool_and(size = 'One Size' AND color_id IS NULL) AS one_size
+         SELECT SUM(quantity) AS total, COUNT(*) AS n, MIN(selling_price_override) AS min_override
          FROM variants
          WHERE item_id = i.id AND deleted_at IS NULL
        ) v ON true
@@ -161,6 +159,7 @@ export async function POST(request: Request) {
     variants = [],
     images = [],
     status = "active",
+    isOneOfAKind = false,
   } = body ?? {};
 
   // ---- Validation ----
@@ -199,6 +198,15 @@ export async function POST(request: Request) {
       if (o != null && (!isNum(o) || o < 0)) {
         return NextResponse.json({ error: "Invalid price override" }, { status: 400 });
       }
+    }
+  }
+  if (typeof isOneOfAKind !== "boolean") {
+    return NextResponse.json({ error: "Invalid one-of-a-kind flag" }, { status: 400 });
+  }
+  if (isOneOfAKind) {
+    const [only] = variants as VariantBody[];
+    if (variants.length !== 1 || only.colorId != null || String(only.size).trim() !== ONE_SIZE) {
+      return NextResponse.json({ error: "A one-of-a-kind item is a single piece, with no sizes or colours." }, { status: 400 });
     }
   }
   if (images.length > MAX_IMAGES) {
@@ -243,8 +251,8 @@ export async function POST(request: Request) {
     const itemRes = await client.query(
       `INSERT INTO items
          (id, title, description, item_type_id, wear_type, cost_price, selling_price,
-          status, created_by, updated_by, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $8, NOW(), NOW())
+          status, created_by, updated_by, created_at, updated_at, is_one_of_a_kind)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $8, NOW(), NOW(), $9)
        RETURNING id, title, status, created_at AS "createdAt"`,
       [
         String(title).trim(),
@@ -255,6 +263,7 @@ export async function POST(request: Request) {
         sellingPrice,
         status,
         userId,
+        isOneOfAKind,
       ]
     );
     const item = itemRes.rows[0];

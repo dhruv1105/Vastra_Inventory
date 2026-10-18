@@ -163,21 +163,21 @@ repo's migrations and seeds, plus `next dev` with the dev owner and a seller cre
 4. "from ₹X" when any live variant has a lower override; otherwise the item price. Same query.
 5. Badges: Draft and Sold out only. No Active badge.
 
-## One-of-a-kind (pending owner decision)
+## One-of-a-kind (approved 2026-10-18, done before step 2)
 
 Today Add Item saves a one-of-a-kind piece as exactly one variant with size "One Size", no colour
 and quantity 1 (`components/items/form.ts`). Nothing else marks it. So detection relies on those
 values (one live variant AND `size = 'One Size'` AND `color_id IS NULL`). It would break if
 someone typed "One Size" as a custom size, or once item editing can change the variant.
 
-Proposed migration (not done until approved):
+Migration `0004_items_one_of_a_kind` (approved; backfill ignores quantity, since a sold piece has 0):
 - `items.is_one_of_a_kind boolean NOT NULL DEFAULT false` (Drizzle schema + generated migration).
 - Backfill: `true` where the item has exactly that one-variant shape.
 - Add Item's POST sends `isOneOfAKind`; the route stores it, ignoring the old shape.
 - The list reads the column. Route tests cover the POST field.
 
-Until it is decided, `GET /api/items` returns `isOneOfAKind` from the value rule, in one SQL
-expression, so switching to the column changes one line.
+Edit rule for the item detail/edit feature (roadmap step 2): a one-of-a-kind item can't gain sizes
+or colours until the flag is turned off, as an explicit action in the edit UI.
 
 ## Original questions
 
@@ -210,3 +210,11 @@ expression, so switching to the column changes one line.
   `items_live_title_search_idx`; variants → `variants_item_idx`. Without search, Postgres chose a
   sequential scan + sort at that size.
   **Not verified:** the Docker dev stack (unavailable in the cloud session); the screen (step 3).
+- **One-of-a-kind flag done (2026-10-18).** `items.is_one_of_a_kind boolean NOT NULL DEFAULT false`
+  (migration 0004, with a backfill: exactly one live variant, size 'One Size', no colour, any
+  quantity). Checked on Postgres 16 by migrating to 0003, inserting six shapes and applying 0004:
+  one piece in stock ✓, sold piece (qty 0) ✓, one live + one deleted variant ✓; with a colour ✗, two
+  variants ✗, no variants ✗. Re-running is a no-op. Add Item sends `isOneOfAKind`. POST stores it
+  and rejects the flag unless the item is exactly one "One Size" variant with no colour. GET reads
+  the column. `ONE_SIZE` lives in `lib/inventory.ts` (shared with Add Item). 8 more tests (98 total)
+  and the database test checks the flag. Production build passes.

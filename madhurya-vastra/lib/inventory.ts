@@ -3,6 +3,9 @@ import type { ItemStatus } from "@/types";
 // Inventory list: shared by GET /api/items and the /inventory screen. Server-only helpers
 // (search query, cursor) live in lib/inventory-query.ts.
 
+/** The size Add Item gives the single variant of a one-of-a-kind item. */
+export const ONE_SIZE = "One Size";
+
 /** Items per "Show more" page. */
 export const PAGE_SIZE = 20;
 

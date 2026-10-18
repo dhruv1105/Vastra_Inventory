@@ -49,6 +49,40 @@ describe("POST /api/items", () => {
   });
 });
 
+describe("POST /api/items — one-of-a-kind flag", () => {
+  beforeEach(() => reset(OWNER));
+  const oneOff = (extra: object = {}) =>
+    body({ isOneOfAKind: true, variants: [{ size: "One Size", colorId: null, quantity: 1 }], ...extra });
+  const insertParams = () => calls.find(([sql]) => sql.includes("INSERT INTO items"))![1]!;
+  const okInsert = () => results.push({ match: "INSERT INTO items", rows: [{ id: ID, title: "x", status: "active" }] });
+
+  it("stores is_one_of_a_kind = true when Add Item sends it", async () => {
+    okInsert();
+    expect((await items.POST(req("POST", "/api/items", { body: oneOff() }))).status).toBe(201);
+    expect(calls.find(([sql]) => sql.includes("INSERT INTO items"))![0]).toContain("is_one_of_a_kind");
+    expect(insertParams()[8]).toBe(true);
+  });
+
+  it("defaults to false when the flag is left out", async () => {
+    okInsert();
+    await items.POST(req("POST", "/api/items", { body: body() }));
+    expect(insertParams()[8]).toBe(false);
+  });
+
+  it.each([
+    ["not a boolean", { isOneOfAKind: "yes" }, /flag/],
+    ["two variants", { variants: [{ size: "One Size", colorId: null, quantity: 1 }, { size: "M", colorId: null, quantity: 1 }] }, /single piece/],
+    ["a colour", { variants: [{ size: "One Size", colorId: ID, quantity: 1 }] }, /single piece/],
+    ["another size", { variants: [{ size: "M", colorId: null, quantity: 1 }] }, /single piece/],
+    ["no variants", { variants: [] }, /single piece/],
+  ])("rejects %s → 400, runs no SQL", async (_name, extra, message) => {
+    const res = await items.POST(req("POST", "/api/items", { body: oneOff(extra) }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(message);
+    expect(calls).toHaveLength(0);
+  });
+});
+
 describe("GET /api/items/[id]", () => {
   beforeEach(() => {
     reset(null);
@@ -191,6 +225,14 @@ describe("GET /api/items (inventory list)", () => {
     expect(sql).toContain("(i.created_at, i.id) < ($3::timestamptz, $4::uuid)");
     // The cursor is the 20th row (the last one shown), with microseconds intact.
     expect(params!.slice(2, 4)).toEqual(["2026-10-18 06:12:00.123456+00", page1[19].id]);
+  });
+
+  it("reads one-of-a-kind from the items column, not from variant values", async () => {
+    reset(OWNER);
+    await list();
+    const [sql] = listSql();
+    expect(sql).toContain('i.is_one_of_a_kind AS "isOneOfAKind"');
+    expect(sql).not.toContain("One Size");
   });
 
   it("passes through the price, stock and one-of-a-kind fields the card needs", async () => {

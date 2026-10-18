@@ -36,9 +36,9 @@ describe.skipIf(!URL_)("GET /api/items on Postgres", () => {
     await client.query("BEGIN");
     for (let n = 1; n <= 25; n++) {
       const { rows } = await client.query(
-        `INSERT INTO items (title, selling_price, status, created_by, updated_by)
-         VALUES ($1, 999, 'active', $2, $2) RETURNING id`,
-        [`${token} item ${n}`, OWNER_ID]
+        `INSERT INTO items (title, selling_price, status, created_by, updated_by, is_one_of_a_kind)
+         VALUES ($1, 999, 'active', $2, $2, $3) RETURNING id`,
+        [`${token} item ${n}`, OWNER_ID, n === 1]
       );
       inserted.push(rows[0].id);
     }
@@ -81,5 +81,8 @@ describe.skipIf(!URL_)("GET /api/items on Postgres", () => {
     expect([...seen].sort()).toEqual([...inserted].sort());
     // Same created_at → id DESC decides the order.
     expect(seen).toEqual([...inserted].sort().reverse());
+    // is_one_of_a_kind comes from the column (only item 1 was flagged).
+    const flagged = [...first.items, ...second.items].filter((i) => (i as { isOneOfAKind?: boolean }).isOneOfAKind);
+    expect(flagged.map((i) => i.id)).toEqual([inserted[0]]);
   });
 });
