@@ -8,7 +8,7 @@
 // money as numeric(12,2) rupees (exact).
 
 import { sql } from "drizzle-orm";
-import { boolean, check, char, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, check, char, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { withTimezone: true });
 const money = (name: string) => numeric(name, { precision: 12, scale: 2 });
@@ -79,6 +79,14 @@ export const accounts = pgTable(
   },
   (t) => [index("accounts_user_idx").on(t.userId)],
 );
+
+/** Sign-in attempt counters (better-auth rate limit). In Postgres so limits hold across servers. */
+export const rateLimits = pgTable("rate_limits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: bigint("last_request", { mode: "number" }).notNull(),
+});
 
 /** One-time values: phone OTP codes, password-reset tokens. */
 export const verifications = pgTable(

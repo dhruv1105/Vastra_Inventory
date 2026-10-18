@@ -87,3 +87,17 @@ Customer accounts, two-factor auth, audit screen, email verification flows.
   one message, public sign-up refused, owner creates a seller, seller gets 403 on staff APIs,
   disabling ends the session and blocks sign-in, create-owner new / duplicate / reset / bad phone,
   production image sign-in. The login screen and API routes are not switched over yet (A2, A3).
+- **A2 done (2026-10-18).** Login on better-auth: one "Phone number or email" field + password
+  (password-manager friendly), one message for unknown account or wrong password, "Too many
+  tries" on the rate limit, returns to `?next=` (same-site paths only). Session-backed
+  `AuthContext` (same `useAuth()` shape: user, loading, signOut, refresh); `middleware.ts` sends
+  visitors without a session cookie to /login and signed-in visitors away from it; the protected
+  layout also redirects when the session is gone (expired / account turned off). Rate limits in
+  Postgres (`rate_limits`, migration 0002): sign-in 5/min, OTP send 3/5 min. Removed: Cognito
+  package and `lib/auth.ts`, dev bypass button (replaced by a "Fill in the test owner" helper in
+  development), Cognito env vars, the unused `User` type. Google / OTP buttons removed until A5/A6.
+  Browser-checked: redirect with next, wrong password, sign-in, reload and direct URLs stay signed
+  in, /login redirects when signed in, menu shows name + role, sign out clears the cookie, 6th
+  wrong try is rate-limited.
+  **Deployment note:** behind a proxy, trust its client-IP header (better-auth
+  `advanced.ipAddress.ipAddressHeaders`), otherwise every visitor shares one rate-limit bucket.

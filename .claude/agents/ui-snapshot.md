@@ -13,8 +13,9 @@ menus and sections, scroll and read. Typing into a search box is fine.
 - App: `http://localhost:3000` unless the caller gives another URL. If it doesn't load, say so
   and stop — do not start the server.
 - Use the Playwright MCP tools. If they are not available, say so and stop.
-- Sign in with the "Dev Bypass Login" button on `/login` (development only). Never guess
-  credentials for anything else.
+- Sign in on `/login` with the development test owner: phone `98765 43210`, password
+  `madhurya-dev` (the "Fill in the test owner" button does it). Never guess other credentials.
+  Sign-in is rate-limited to 5 tries a minute.
 - Screens: `/login`, `/inventory`, `/items/new`, `/manage-lists` (tabs Types, Colors, Occasions,
   Tags), `/sales`, `/dashboard`.
 

@@ -1,54 +1,61 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { AppUser, signOut as cognitoSignOut, getSession } from "@/lib/auth";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth/client";
+import { isPlaceholderEmail } from "@/lib/auth/staff.mjs";
+import type { Role } from "@/lib/auth/roles";
+
+/** The signed-in person, as screens need it. The server re-checks everything (lib/auth/guard.ts). */
+export interface AppUser {
+  id: string;
+  name: string;
+  phone: string | null;
+  /** null when the account only has the hidden placeholder email. */
+  email: string | null;
+  role: Role;
+  mustChangePassword: boolean;
+}
 
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
-  signIn: (user: AppUser) => void;
-  signOut: () => void;
+  /** Ends the session on the server, then goes to /login. */
+  signOut: () => Promise<void>;
+  /** Re-reads the session (after a password change, role change …). */
+  refresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isPending, refetch } = authClient.useSession();
+  const router = useRouter();
 
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        const session = await getSession();
-        if (session) {
-          // Typically we would decode the session token and fetch the user profile
-          // But since Cognito is a placeholder, this part will be handled in the login page
-          // or a sync-user API call.
-        }
-      } catch (error) {
-        console.error("Failed to restore session", error);
-      } finally {
-        setLoading(false);
-      }
+  const user = useMemo<AppUser | null>(() => {
+    const u = data?.user;
+    if (!u) return null;
+    return {
+      id: u.id,
+      name: u.name,
+      phone: u.phoneNumber ?? null,
+      email: isPlaceholderEmail(u.email) ? null : u.email,
+      role: (u.role === "owner" ? "owner" : "seller") as Role,
+      mustChangePassword: !!u.mustChangePassword,
     };
+  }, [data]);
 
-    initAuth();
-  }, []);
+  const signOut = useCallback(async () => {
+    await authClient.signOut();
+    router.replace("/login");
+    router.refresh();
+  }, [router]);
 
-  const signIn = (appUser: AppUser) => {
-    setUser(appUser);
-  };
+  const refresh = useCallback(async () => {
+    await refetch();
+  }, [refetch]);
 
-  const signOut = () => {
-    cognitoSignOut();
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={{ user, loading: isPending, signOut, refresh }}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { admin, phoneNumber } from "better-auth/plugins";
 import { db } from "@/lib/db";
-import { accounts, sessions, users, verifications } from "@/db/schema";
+import { accounts, rateLimits, sessions, users, verifications } from "@/db/schema";
 import { hashPassword, verifyPassword } from "./password.mjs";
 import { normalizePhone } from "./staff.mjs";
 import { ac, owner, seller } from "./roles";
@@ -28,7 +28,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   database: drizzleAdapter(db, {
     provider: "pg",
-    schema: { user: users, session: sessions, account: accounts, verification: verifications },
+    schema: { user: users, session: sessions, account: accounts, verification: verifications, rateLimit: rateLimits },
   }),
   advanced: {
     cookiePrefix: "mv",
@@ -50,6 +50,18 @@ export const auth = betterAuth({
   session: {
     expiresIn: 30 * DAY,
     updateAge: DAY,
+  },
+  // Counted in Postgres (works with more than one server). Sign-in: 5 tries a minute per address.
+  rateLimit: {
+    enabled: process.env.NODE_ENV !== "test",
+    storage: "database",
+    modelName: "rateLimit",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/*": { window: 60, max: 5 },
+      "/phone-number/send-otp": { window: 300, max: 3 },
+    },
   },
   plugins: [
     phoneNumber({

@@ -22,7 +22,7 @@ app needs to start (lookup lists) goes in `db/seeds/*.sql`, written to be safe t
 
 | Table | Key columns | Notes |
 |---|---|---|
-| `users` | `id` uuid, `cognito_sub`, `name`, `email`, `phone`, `avatar_url`, `role` | role `owner` \| `seller` |
+| `users` | `id` uuid, `name`, `email` (placeholder on .invalid for phone-only staff), `phone` (E.164), `role`, `disabled`, `must_change_password` | better-auth user table; also `sessions`, `accounts` (password hash), `verifications`, `rate_limits` |
 | `items` | `id`, `title` (≤150), `description` (≤500), `item_type_id`, `wear_type`, `cost_price`, `selling_price`, `status` | `wear_type` `top`/`bottom`/`both`; `status` `active`/`draft`/`sold_out`/`archived` |
 | `variants` | `id`, `item_id`, `size`, `color_id`, `quantity`, `selling_price_override`, `cost_price_override`, `display_order` | one row per size × colour |
 | `images` | `id`, `item_id`, `s3_key`, `cdn_url`, `mime_type`, `size_bytes`, `display_order`, `alt_text` | files under `public/uploads/items/<itemId>/` today; first = cover |

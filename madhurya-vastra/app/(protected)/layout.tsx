@@ -42,11 +42,11 @@ export default function ProtectedLayout({
   const router = useRouter();
   const pathname = usePathname();
 
+  // middleware.ts sends visitors without a session cookie to /login; this catches an expired or
+  // revoked session (e.g. the owner turned the account off).
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
-    } else if (!loading && user && pathname === "/") {
-      router.push("/inventory");
+      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
   }, [user, loading, router, pathname]);
 
