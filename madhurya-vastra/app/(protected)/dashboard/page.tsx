@@ -1,11 +1,15 @@
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/ui/EmptyState";
+
+// TODO(roadmap): build the real dashboard once Inventory list and Sales hold enough data —
+// today's sales, low stock, best sellers, stock value. Scope in docs/roadmap.md#dashboard.
 export default function DashboardPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-brand-primary mb-6">Dashboard</h1>
-      
-      <div className="bg-white rounded-[12px] shadow-sm border border-gray-100 p-8 text-center">
-        <p className="text-brand-text-muted">Analytics dashboard will be implemented in a future feature.</p>
-      </div>
+    <div className="mv-stagger mx-auto grid max-w-6xl grid-cols-1 gap-5 px-4 py-5 md:px-7 md:py-7">
+      <PageHeader eyebrow="Overview" title="Dashboard" />
+      <EmptyState eyebrow="Comes after Sales" title="Your shop at a glance">
+        Today&apos;s sales, items running low and this month&apos;s best sellers will appear here.
+      </EmptyState>
     </div>
   );
 }

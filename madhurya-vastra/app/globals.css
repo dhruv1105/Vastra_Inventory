@@ -2,22 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Colours, fonts, radii and motion come from the theme (lib/theme) as --mv-* variables.
+   Only layout measurements live here. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bottom-nav-h: 4rem;
 }
 
-@media (prefers-color-scheme: dark) {
+/* Phone landscape / very short screens: slimmer bottom nav */
+@media (max-height: 500px) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bottom-nav-h: 3rem;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  :focus-visible {
+    outline: 2px solid rgb(var(--mv-primary-soft));
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -38,5 +40,64 @@ body {
 }
 
 .animate-slide-up {
-  animation: slide-up 0.25s ease-out forwards;
+  animation: slide-up var(--mv-dur-slow) var(--mv-ease) forwards;
+}
+
+/* Page entrance: children rise in one after another (40ms apart, ≤ 280ms total). Put on the
+   page's content wrapper; content is fully visible once the animation ends. */
+@keyframes rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.mv-stagger > * {
+  animation: rise 0.45s var(--mv-ease) both;
+}
+.mv-stagger > *:nth-child(2) { animation-delay: 40ms; }
+.mv-stagger > *:nth-child(3) { animation-delay: 80ms; }
+.mv-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.mv-stagger > *:nth-child(5) { animation-delay: 160ms; }
+.mv-stagger > *:nth-child(6) { animation-delay: 200ms; }
+.mv-stagger > *:nth-child(7) { animation-delay: 240ms; }
+.mv-stagger > *:nth-child(n + 8) { animation-delay: 280ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Login: the real logo blooms in (scale + soft blur), then the sign-in card rises. ~1s. */
+@keyframes mv-bloom {
+  0% {
+    transform: scale(0.86);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+    filter: none;
+  }
+}
+.mv-bloom {
+  animation: mv-bloom 0.9s var(--mv-ease) both;
+}
+.mv-rise-late {
+  animation: rise 0.6s var(--mv-ease) 0.55s both;
 }

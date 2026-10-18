@@ -1,5 +1,9 @@
 import type { Config } from "tailwindcss";
 
+// Every value points at a theme CSS variable (lib/theme/css.ts). Never add hex values here —
+// change the theme preset in lib/theme/presets.ts instead.
+const c = (name: string) => `rgb(var(--mv-${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: [
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -7,27 +11,44 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        // Phone landscape and other very short viewports: slimmer chrome.
+        short: { raw: "(max-height: 500px)" },
+      },
       colors: {
-        brand: {
-          primary: "#6B3FA0", // deep purple
-          secondary: "#9B6FD0", // light purple
-          accent: "#C9A84C", // gold
-          background: "#FAFAFA",
-          surface: "#FFFFFF",
-          text: {
-            primary: "#1A1A2E",
-            muted: "#6B7280"
-          }
-        }
+        primary: { DEFAULT: c("primary"), hover: c("primary-hover"), soft: c("primary-soft"), on: c("on-primary") },
+        tint: { DEFAULT: c("tint"), strong: c("tint-strong") },
+        canvas: c("canvas"),
+        surface: c("surface"),
+        line: c("border"),
+        fg: c("fg"),
+        muted: c("muted"),
+        zari: { DEFAULT: c("zari"), tint: c("zari-tint") },
+        success: { DEFAULT: c("success"), tint: c("success-tint") },
+        danger: { DEFAULT: c("danger"), tint: c("danger-tint") },
+        lavender: { DEFAULT: c("lavender"), glow: c("lavender-glow") },
       },
       fontFamily: {
-        serif: ['"Cormorant Garamond"', "serif"],
-        sans: ['"Inter"', "sans-serif"],
+        brand: ["var(--mv-font-brand)"],
+        display: ["var(--mv-font-display)"],
+        accent: ["var(--mv-font-accent)"],
+        sans: ["var(--mv-font-ui)"],
       },
       borderRadius: {
-        card: "12px",
-        input: "8px",
-      }
+        sm: "var(--mv-radius-sm)",
+        md: "var(--mv-radius-md)",
+        lg: "var(--mv-radius-lg)",
+      },
+      transitionDuration: {
+        fast: "var(--mv-dur-fast)",
+        base: "var(--mv-dur-base)",
+        slow: "var(--mv-dur-slow)",
+      },
+      // Stacking layers, lowest to highest. Use these names, never numbers.
+      zIndex: { nav: "40", menu: "50", toast: "60", dialog: "70" },
+      transitionTimingFunction: {
+        brand: "var(--mv-ease)",
+      },
     },
   },
   plugins: [],

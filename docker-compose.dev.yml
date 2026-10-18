@@ -1,0 +1,30 @@
+# Development overlay: next dev with live reload, Postgres reachable from the host,
+# migrations + seeds (incl. the dev owner) on every start.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d   (or ./scripts/dev-up.sh)
+
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_PORT:-5440}:5432"
+
+  app:
+    # Own image name, so building the production image never replaces the dev one.
+    image: vastra-app-dev
+    build:
+      target: dev
+    restart: "no"
+    command: sh scripts/dev-entrypoint.sh
+    environment:
+      NODE_ENV: development
+      DEV_OWNER_PASSWORD: ${DEV_OWNER_PASSWORD:-madhurya-dev}
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./madhurya-vastra:/app
+      # Keep the container's own node_modules and build cache, not the host's.
+      - app-node-modules:/app/node_modules
+      - app-next:/app/.next
+
+volumes:
+  app-node-modules:
+  app-next:
