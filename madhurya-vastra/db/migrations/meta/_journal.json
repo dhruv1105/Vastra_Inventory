@@ -43,6 +43,13 @@
       "when": 1792307132322,
       "tag": "0005_variants_live_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792340178235,
+      "tag": "0006_colors_second_hex",
+      "breakpoints": true
     }
   ]
 }

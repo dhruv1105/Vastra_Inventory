@@ -53,7 +53,7 @@ export async function loadItemFull(id: string, run: Run = viaPool): Promise<Item
       [id]
     ),
     run(
-      `SELECT v.id, v.size, v.color_id AS "colorId", c.name AS "colorName", c.hex_code AS "colorHex",
+      `SELECT v.id, v.size, v.color_id AS "colorId", c.name AS "colorName", c.hex_code AS "colorHex", c.hex_code_2 AS "colorHex2",
               v.quantity, v.selling_price_override::float8 AS "sellingPriceOverride",
               v.cost_price_override::float8 AS "costPriceOverride", v.display_order AS "displayOrder"
        FROM variants v LEFT JOIN colors c ON c.id = v.color_id
@@ -108,6 +108,7 @@ export function toSellerItem(item: Item): ItemSellerView {
       colorId: v.colorId,
       colorName: v.colorName,
       colorHex: v.colorHex,
+      colorHex2: v.colorHex2,
       quantity: v.quantity,
       sellingPriceOverride: v.sellingPriceOverride,
       displayOrder: v.displayOrder,

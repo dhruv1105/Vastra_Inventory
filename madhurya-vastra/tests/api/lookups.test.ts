@@ -84,3 +84,41 @@ describe.each(LISTS)("/api/lookups/$name", ({ name, col, item, sellerCanAdd }) =
     expect((await col.GET(req("GET", `/api/lookups/${name}`))).status).toBe(403);
   });
 });
+
+describe("/api/lookups/colors — second colour (combinations like Red & Gold)", () => {
+  beforeEach(() => reset(OWNER));
+  const row = { id: ID, name: "Red & Gold", hexCode: "#C0392B", hexCode2: "#D4AF37" };
+
+  it("POST stores both codes", async () => {
+    results.push({ match: "INSERT INTO", rows: [row] });
+    const res = await colors.POST(req("POST", "/api/lookups/colors", { body: { name: "Red & Gold", hexCode: "#C0392B", hexCode2: "#D4AF37" } }));
+    expect(res.status).toBe(201);
+    expect(sqlLike("INSERT INTO colors")[0][1]!.slice(0, 3)).toEqual(["Red & Gold", "#C0392B", "#D4AF37"]);
+    expect((await res.json()).data.hexCode2).toBe("#D4AF37");
+  });
+
+  it("a malformed second code → 400, runs no SQL", async () => {
+    const res = await colors.POST(req("POST", "/api/lookups/colors", { body: { name: "X", hexCode2: "gold" } }));
+    expect(res.status).toBe(400);
+    expect(calls.filter(([s]) => s.includes("INSERT"))).toHaveLength(0);
+  });
+
+  it.each([
+    ["left out → kept", {}, false, null],
+    ["null → cleared", { hexCode2: null }, true, null],
+    ["empty → cleared", { hexCode2: "" }, true, null],
+    ["a code → set", { hexCode2: "#D4AF37" }, true, "#D4AF37"],
+  ])("PATCH second code %s", async (_n, extra, change, value) => {
+    results.push({ match: "UPDATE colors", rows: [row] });
+    await colorItem.PATCH(req("PATCH", `/api/lookups/colors/${ID}`, { body: { name: "Red & Gold", ...extra } }), ctx(ID));
+    const [sql, params] = sqlLike("UPDATE colors")[0];
+    expect(sql).toContain("hex_code_2 = CASE WHEN $5::boolean THEN $6::text ELSE hex_code_2 END");
+    expect(params!.slice(4)).toEqual([change, value]);
+  });
+
+  it("other lists don't take colour codes", async () => {
+    results.push({ match: "INSERT INTO", rows: [{ id: ID, name: "Silk" }] });
+    await tags.POST(req("POST", "/api/lookups/tags", { body: { name: "Silk", hexCode2: "#D4AF37" } }));
+    expect(sqlLike("INSERT INTO tags")[0][0]).not.toContain("hex_code");
+  });
+});

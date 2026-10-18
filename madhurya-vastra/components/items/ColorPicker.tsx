@@ -81,7 +81,7 @@ export default function ColorPicker({ open, title, colors, value, onDone, onClos
                   )}
                 >
                   <input type="checkbox" checked={on} onChange={() => toggle(c.id)} className="h-5 w-5 shrink-0 accent-primary" />
-                  <Swatch hex={c.hexCode} />
+                  <Swatch hex={c.hexCode} hex2={c.hexCode2} />
                   <span className="truncate">{c.name}</span>
                 </label>
               </li>

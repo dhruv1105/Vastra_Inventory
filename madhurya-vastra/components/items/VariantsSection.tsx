@@ -101,7 +101,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
         {form.colorIds.map((c) => (
           <th key={c} scope="col" className="px-1 pb-1 align-bottom text-sm font-medium text-muted">
             <span className="grid min-w-16 justify-items-center gap-1">
-              <Swatch hex={colorById(c)?.hexCode} />
+              <Swatch hex={colorById(c)?.hexCode} hex2={colorById(c)?.hexCode2} />
               <span className="max-w-20 truncate text-fg">{colorById(c)?.name ?? "—"}</span>
               {withFill && (
                 <button type="button" onClick={() => fill(form.sizes, [c], fillValue())} className="rounded-sm px-1 text-xs font-semibold text-primary hover:bg-tint">
@@ -189,7 +189,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
               <div role="group" aria-labelledby="item-colours-label" className="flex flex-wrap gap-2">
                 {form.colorIds.map((c) => (
                   <span key={c} className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-tint py-0.5 pl-2 pr-1 text-sm font-semibold text-primary">
-                    <Swatch hex={colorById(c)?.hexCode} />
+                    <Swatch hex={colorById(c)?.hexCode} hex2={colorById(c)?.hexCode2} />
                     {colorById(c)?.name}
                     <button type="button" aria-label={`Remove colour ${colorById(c)?.name}`} onClick={() => removeColor(c)} className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-danger-tint hover:text-danger">
                       <X aria-hidden="true" className="h-3.5 w-3.5" />

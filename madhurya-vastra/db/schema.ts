@@ -129,10 +129,15 @@ export const colors = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: varchar("name", { length: 50 }).notNull().unique(),
     hexCode: char("hex_code", { length: 7 }),
+    /** Second colour of a combination ("Red & Gold"): the dot shows half and half. */
+    hexCode2: char("hex_code_2", { length: 7 }),
     ...audit(),
     deletedAt: ts("deleted_at"),
   },
-  (t) => [check("colors_hex_check", sql`${t.hexCode} ~ '^#[0-9A-Fa-f]{6}$'`)],
+  (t) => [
+    check("colors_hex_check", sql`${t.hexCode} ~ '^#[0-9A-Fa-f]{6}$'`),
+    check("colors_hex_2_check", sql`${t.hexCode2} ~ '^#[0-9A-Fa-f]{6}$'`),
+  ],
 );
 
 export const items = pgTable(

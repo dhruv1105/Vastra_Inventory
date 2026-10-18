@@ -2,6 +2,8 @@ export type LookupItem = {
   id: string
   name: string
   hexCode?: string
+  /** Colours only: second colour of a combination ("Red & Gold"). */
+  hexCode2?: string | null
   createdAt: string
 }
 
@@ -90,6 +92,7 @@ export type VariantDetail = {
   colorId: string | null
   colorName: string | null
   colorHex: string | null
+  colorHex2: string | null
   quantity: number
   sellingPriceOverride: number | null
   costPriceOverride?: number | null
