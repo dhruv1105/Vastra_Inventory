@@ -2,18 +2,62 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus, RotateCw, Search, X } from "lucide-react";
+import { LayoutGrid, List, Plus, RotateCw, Search, X } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/ui/EmptyState";
 import Button, { LinkButton } from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import InventoryCard from "@/components/inventory/InventoryCard";
-import InventorySkeleton from "@/components/inventory/InventorySkeleton";
+import InventoryCard, { type InventoryLayout } from "@/components/inventory/InventoryCard";
+import InventorySkeleton, { listClass } from "@/components/inventory/InventorySkeleton";
+import { cn } from "@/lib/cn";
 import { SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
 
 /** The server's generic failure sentence (GET /api/items 500). The error card's title already says it. */
 const LOAD_FAILED = "Could not load the inventory. Try again.";
+
+/** Phone list/grid choice, remembered per device. */
+const LAYOUT_KEY = "mv-inventory-layout";
+
+/** Saved layout, or grid when nothing is saved or storage is unavailable (private mode, blocked). */
+function readLayout(): InventoryLayout {
+  try {
+    return localStorage.getItem(LAYOUT_KEY) === "list" ? "list" : "grid";
+  } catch {
+    return "grid";
+  }
+}
+
+function saveLayout(layout: InventoryLayout) {
+  try {
+    localStorage.setItem(LAYOUT_KEY, layout);
+  } catch {
+    // Storage unavailable: the choice lasts for this visit only.
+  }
+}
+
+/** Grid / list switch for phones (tablet and up are always grid). */
+function LayoutToggle({ value, onChange }: { value: InventoryLayout; onChange: (l: InventoryLayout) => void }) {
+  const options: { value: InventoryLayout; label: string; icon: JSX.Element }[] = [
+    { value: "grid", label: "Show as grid", icon: <LayoutGrid /> },
+    { value: "list", label: "Show as list", icon: <List /> },
+  ];
+  return (
+    <div role="group" aria-label="Layout" className="flex shrink-0 rounded-md border border-line bg-surface p-0.5 md:hidden">
+      {options.map((o) => (
+        <IconButton
+          key={o.value}
+          label={o.label}
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+          className={cn(value === o.value && "bg-tint text-primary")}
+        >
+          {o.icon}
+        </IconButton>
+      ))}
+    </div>
+  );
+}
 
 /** Wait this long after the last keystroke before searching. */
 const SEARCH_DELAY_MS = 300;
@@ -56,6 +100,14 @@ function InventoryList() {
   const [moreError, setMoreError] = useState("");
   const controller = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [layout, setLayout] = useState<InventoryLayout>("grid");
+
+  // Read after mount: the server render can't see localStorage (avoids a hydration mismatch).
+  useEffect(() => setLayout(readLayout()), []);
+  const changeLayout = (l: InventoryLayout) => {
+    setLayout(l);
+    saveLayout(l);
+  };
 
   // Debounce: search 300 ms after typing stops; keep it in ?q= so Back from an item restores it.
   useEffect(() => {
@@ -135,28 +187,31 @@ function InventoryList() {
         }
       />
 
-      <div role="search" className="flex items-center gap-2">
-        <div className="relative min-w-0 flex-1">
-          <Input
-            ref={inputRef}
-            type="search"
-            inputMode="search"
-            enterKeyHint="search"
-            aria-label="Search items by title"
-            placeholder="Search by title, e.g. lav geo"
-            maxLength={SEARCH_MAX}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Escape" && text && clearSearch()}
-            leading={<Search />}
-            className="pr-11 [&::-webkit-search-cancel-button]:hidden"
-          />
-          {text && (
-            <IconButton label="Clear search" size="sm" onClick={clearSearch} className="absolute right-1 top-1/2 -translate-y-1/2">
-              <X />
-            </IconButton>
-          )}
+      <div className="flex items-center gap-2">
+        <div role="search" className="min-w-0 flex-1">
+          <div className="relative min-w-0 flex-1">
+            <Input
+              ref={inputRef}
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
+              aria-label="Search items by title"
+              placeholder="Search by title, e.g. lav geo"
+              maxLength={SEARCH_MAX}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Escape" && text && clearSearch()}
+              leading={<Search />}
+              className="pr-11 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {text && (
+              <IconButton label="Clear search" size="sm" onClick={clearSearch} className="absolute right-1 top-1/2 -translate-y-1/2">
+                <X />
+              </IconButton>
+            )}
+          </div>
         </div>
+        <LayoutToggle value={layout} onChange={changeLayout} />
       </div>
 
       {/* Announces results to screen readers without moving focus. */}
@@ -164,7 +219,7 @@ function InventoryList() {
         {state === "ready" && (items.length ? `${items.length} item${items.length === 1 ? "" : "s"} shown${nextCursor ? ", more available" : ""}` : "No items")}
       </p>
 
-      {state === "loading" && <InventorySkeleton label={term ? `Searching for ${term}` : "Loading items"} />}
+      {state === "loading" && <InventorySkeleton layout={layout} label={term ? `Searching for ${term}` : "Loading items"} />}
 
       {state === "error" && (
         <EmptyState
@@ -209,10 +264,10 @@ function InventoryList() {
 
       {state === "ready" && items.length > 0 && (
         <>
-          <ul className="grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+          <ul className={listClass(layout)}>
             {items.map((item) => (
               <li key={item.id} className="grid">
-                <InventoryCard item={item} />
+                <InventoryCard item={item} layout={layout} />
               </li>
             ))}
           </ul>
