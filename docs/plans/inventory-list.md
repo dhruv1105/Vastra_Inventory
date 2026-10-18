@@ -237,3 +237,15 @@ or colours until the flag is turned off, as an explicit action in the edit UI.
   harmless, Back restores the search, owner and a new seller see the same list and no cost field.
   Empty, error, loading and failed Show more were produced by stubbing the API in the browser.
   Known until step 4: card links go to `/items/<id>`, which is still a 404.
+- **Phone grid + switch (2026-10-18).** Phones default to a 2-column 4:5 photo card (≈173 px):
+  2-line title, no type, "₹2,450 · 3 left" on one line, badges over the photo's corner (equal heights
+  per row, checked), sold-out dimmed. The row layout stays as "list"; a grid/list switch next to the
+  search box (phones only) is saved per device in localStorage (`mv-inventory-layout`; grid when
+  storage throws — checked with a throwing localStorage). Tablet and up unchanged.
+- **Compact PageHeader (2026-10-18).** On `short:` screens (max-height 500px) the shared PageHeader
+  drops eyebrow and vine and uses a 2xl title: content starts 37–49 px higher on Inventory, Manage
+  Lists and Add Item at 844×390; laptop and tablet positions unchanged.
+- **Step 4 done (2026-10-18).** `/items/[id]` placeholder: back link, the item's title and cover,
+  "Item details are on the way"; unknown or malformed ids → "This item isn't here"; load error →
+  Try again. `components/layout/nav.ts` maps `/items/<id>` (not `/items/new`) to Inventory, so it
+  stays highlighted (4 unit tests in `tests/lib/nav.test.ts`). Browser-checked at 390 and 1366.
