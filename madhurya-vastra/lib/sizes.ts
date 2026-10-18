@@ -17,3 +17,15 @@ export function normalizeSize(raw: string): string {
   const s = collapse(raw);
   return KNOWN.get(s.toLowerCase()) ?? s;
 }
+
+/** Sizes to show as quick choices (One Size is the one-of-a-kind piece's size, not a choice). */
+export const SIZE_CHOICES = KNOWN_SIZES.filter((s) => s !== "One Size");
+
+/** Known sizes in their usual order (XS → XXXL, Free Size), then custom sizes in the order added. */
+export function orderSizes(sizes: string[]): string[] {
+  const rank = (s: string) => {
+    const i = (KNOWN_SIZES as readonly string[]).indexOf(s);
+    return i === -1 ? KNOWN_SIZES.length : i;
+  };
+  return sizes.map((s, i) => ({ s, i })).sort((a, b) => rank(a.s) - rank(b.s) || a.i - b.i).map((x) => x.s);
+}
