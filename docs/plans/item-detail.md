@@ -230,3 +230,14 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   saves → exactly one wins, duplicate 400 + removed size re-added, stock guard, owner/seller history,
   seller keeps cost, photo file written/kept, failed save removes its file, one-of-a-kind turn-off).
   Breaking the version check or the stock guard fails 5 of them.
+- **Step 6 done (2026-10-18).** Add Item's page is now the shared `components/items/ItemForm.tsx`
+  (`mode: "create"`; edit mode arrives with step 8); `/items/new` just renders it. The save, the
+  four lookup lists and "add a new item type" go through `apiFetch`. Before/after screenshots at
+  390×844, 844×390, 768×1024 and 1366×768 (empty, and after "Add to inventory" with errors): same
+  pixels apart from anti-aliasing, no horizontal scroll, no console errors. Checked in the browser:
+  draft saved → inventory with the same toast; an existing type → "This type already exists"; a new
+  type is chosen; a server refusal shows its sentence and keeps the input; no network → "Could not
+  reach the server…"; session gone → sign-in with `?next=/items/new`.
+  **Changed:** a network failure used to show the browser's raw "Failed to fetch"; a session that
+  ended while the form was open now goes to sign-in (the typed form is lost — see Open).
+  **Open:** keep Add Item's typed text across a sign-in (photos can't be kept the same way).
