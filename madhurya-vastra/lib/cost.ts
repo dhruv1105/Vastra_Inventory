@@ -1,15 +1,17 @@
 import type { Role } from "@/lib/auth/roles";
 
-// Cost prices (and anything derived from them, like margin) are owner-only. This is the ONE place
-// that decides it: item reads (lib/items.ts) and activity-log reads (lib/activity.ts) both pass
-// their data through `forRole`, so a new cost field is hidden from sellers without extra code.
+// Cost prices (and anything derived from them, like margin) are owner-only. Two layers:
+// 1. Seller responses are built field by field from an allowlist (e.g. toSellerItem in
+//    lib/items.ts, the inventory list's row mapping), so a new column never reaches them by default.
+// 2. This file is the safety net on top: forRole() strips every cost-like key at any depth for
+//    non-owners. Item reads and activity-log reads (lib/activity.ts) both pass through it.
 
-const COST_WORDS = new Set(["cost", "margin"]);
+const COST_WORDS = new Set(["cost", "margin", "profit", "purchase"]);
 
 /**
- * True for keys that carry cost or cost-derived values: any whole word "cost" or "margin" in a
- * camelCase or snake_case key (costPrice, cost_price_override, unitCost, marginPct) — but not
- * "costume" or "accost".
+ * True for keys that carry cost or cost-derived values: any whole word "cost", "margin", "profit"
+ * or "purchase" in a camelCase or snake_case key (costPrice, cost_price_override, unitCost,
+ * marginPct, profit, purchasePrice) — but not "costume" or "accost".
  */
 export const isCostKey = (key: string) =>
   key

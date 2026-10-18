@@ -2,7 +2,7 @@ import type { PoolClient } from "pg";
 import { query } from "@/lib/db";
 import { forRole } from "@/lib/cost";
 import type { Role } from "@/lib/auth/roles";
-import type { Item } from "@/types";
+import type { Item, ItemSellerView } from "@/types";
 
 // Server-only: reading one item with everything the detail and edit screens need.
 // Cost fields are always loaded, then filtered per role by forRole() — never by hand here.
@@ -71,8 +71,46 @@ export async function loadItemFull(id: string, run: Run = viaPool): Promise<Item
   } as Item;
 }
 
-/** The item as `role` may see it (sellers: no cost fields anywhere). */
-export async function loadItem(id: string, role: Role, run: Run = viaPool): Promise<Item | null> {
+/**
+ * A seller's view of an item, built field by field (allowlist): a field added to the query later
+ * stays hidden from sellers until it is listed here on purpose. forRole() still runs on top.
+ */
+export function toSellerItem(item: Item): ItemSellerView {
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    itemTypeId: item.itemTypeId,
+    itemTypeName: item.itemTypeName,
+    wearType: item.wearType,
+    status: item.status,
+    isOneOfAKind: item.isOneOfAKind,
+    sellingPrice: item.sellingPrice,
+    captionText: item.captionText,
+    createdAt: item.createdAt,
+    createdBy: item.createdBy && { id: item.createdBy.id, name: item.createdBy.name },
+    updatedAt: item.updatedAt,
+    updatedBy: item.updatedBy && { id: item.updatedBy.id, name: item.updatedBy.name },
+    version: item.version,
+    occasions: item.occasions.map((o) => ({ id: o.id, name: o.name, createdAt: o.createdAt })),
+    tags: item.tags.map((t) => ({ id: t.id, name: t.name, createdAt: t.createdAt })),
+    variants: item.variants.map((v) => ({
+      id: v.id,
+      size: v.size,
+      colorId: v.colorId,
+      colorName: v.colorName,
+      colorHex: v.colorHex,
+      quantity: v.quantity,
+      sellingPriceOverride: v.sellingPriceOverride,
+      displayOrder: v.displayOrder,
+    })),
+    images: item.images.map((i) => ({ id: i.id, cdnUrl: i.cdnUrl, displayOrder: i.displayOrder, altText: i.altText })),
+  };
+}
+
+/** The item as `role` may see it: the owner gets everything; sellers get the allowlisted view. */
+export async function loadItem(id: string, role: Role, run: Run = viaPool): Promise<Item | ItemSellerView | null> {
   const item = await loadItemFull(id, run);
-  return item && forRole(item, role);
+  if (!item) return null;
+  return role === "owner" ? item : forRole(toSellerItem(item), role); // forRole: the safety net
 }

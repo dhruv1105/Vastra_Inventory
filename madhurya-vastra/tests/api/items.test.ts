@@ -122,6 +122,20 @@ describe("GET /api/items/[id]", () => {
     expect(json.data.sellingPrice).toBe(1999);
   });
 
+  it("seller view is an allowlist: a column added to the query later doesn't reach sellers", async () => {
+    reset(SELLER);
+    withItem();
+    (results[0].rows[0] as Record<string, unknown>).supplierNote = "bought at Surat";
+    (results[1].rows[0] as Record<string, unknown>).supplierCode = "SRT-9";
+    const { data } = await (await get()).json();
+    expect(data).not.toHaveProperty("supplierNote");
+    expect(data.variants[0]).not.toHaveProperty("supplierCode");
+    reset(OWNER);
+    withItem();
+    (results[0].rows[0] as Record<string, unknown>).supplierNote = "bought at Surat";
+    expect((await (await get()).json()).data.supplierNote).toBe("bought at Surat");
+  });
+
   it("as the owner: item and variant cost included", async () => {
     reset(OWNER);
     withItem();

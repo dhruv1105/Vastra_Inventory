@@ -69,13 +69,20 @@ export type Item = {
   createdBy: PersonRef | null
   updatedAt: string
   updatedBy: PersonRef | null
-  /** Concurrency token: send it back on every change; a stale one gets 409. */
+  /**
+   * Concurrency token: Postgres' own text for updated_at (microseconds kept). Opaque — keep it as a
+   * string, send it back unchanged on every change, never turn it into a Date (that drops
+   * microseconds, and two saves inside one millisecond would look the same). A stale one gets 409.
+   */
   version: string
   occasions: LookupItem[]
   tags: LookupItem[]
   variants: VariantDetail[]
   images: ImageDetail[]
 }
+
+/** What a seller receives for an item: no cost fields (built field by field in lib/items.ts). */
+export type ItemSellerView = Omit<Item, "costPrice" | "variants"> & { variants: Omit<VariantDetail, "costPriceOverride">[] }
 
 export type VariantDetail = {
   id: string

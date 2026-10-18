@@ -3,7 +3,7 @@ import { forRole, isCostKey, stripCost } from "@/lib/cost";
 
 describe("cost filter (lib/cost.ts)", () => {
   it("recognises cost and margin keys in camelCase and snake_case", () => {
-    for (const k of ["costPrice", "cost_price", "costPriceOverride", "cost_price_override", "margin", "marginPct", "unitCost"]) expect(isCostKey(k)).toBe(true);
+    for (const k of ["costPrice", "cost_price", "costPriceOverride", "cost_price_override", "margin", "marginPct", "unitCost", "profit", "grossProfit", "purchase_price", "purchasePrice"]) expect(isCostKey(k)).toBe(true);
     for (const k of ["sellingPrice", "selling_price_override", "costume", "accost", "title"]) expect(isCostKey(k)).toBe(false);
   });
 

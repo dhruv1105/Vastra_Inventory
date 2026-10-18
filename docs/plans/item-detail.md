@@ -180,3 +180,11 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   `Item` matches the response. Tests: 3 cost-filter unit tests, 6 route tests (401 without SQL, 400/404,
   seller has no cost anywhere, owner has item and variant cost, version and names, live rows only).
   Live check on Postgres: owner sees cost 3000 and override 2800; the seller response contains no "cost".
+- **Step 1 follow-up (2026-10-18).** Two layers of cost protection: sellers get `toSellerItem()`
+  (built field by field; a new query column stays hidden until listed), and `forRole()` from
+  `lib/cost.ts` still runs on top (words now cost, margin, profit, purchase). Value-based Postgres test
+  (`tests/db/cost-leak.db.test.ts`): cost 3777.77 on an item and a variant override never appears in
+  a seller's detail or inventory-list response (the owner's detail has it); it fails when sellers get
+  the owner view. Version token: an opaque string everywhere (documented on `Item.version`); a guard
+  test fails on `new Date(…version…)` / `Date.parse(…version…)`; a Postgres test shows two updates
+  0.5 ms apart get different versions and the old one no longer matches `updated_at = $1::timestamptz`.
