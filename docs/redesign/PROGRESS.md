@@ -30,7 +30,7 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 - [x] R1.6 Dark mode: ThemeProvider, ThemeSwitch, no-flash boot script, lavender tokens
 - [x] R1.7 Motion: GSAP (lazy), Intro + useIntroOnce, `.mv-stagger` page entrance, reduced-motion
 - [x] R2 Shell: header title, Manage Lists in nav, account menu + theme, sidebar rail, intro
-- [ ] R3 Manage Lists on the kit
+- [x] R3 Manage Lists on the kit
 - [ ] R4.1 Add Item split into section components (no visual change)
 - [ ] R4.2 Add Item section nav + collapsible sections
 - [ ] R4.3 Variant grid: blank cells, fill row/column/all
@@ -73,3 +73,11 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
   at 390×844, 844×390, 768×1024, 1366×768: 5 nav links, active item correct, menu closes on Esc
   (focus back) and outside tap, no horizontal scroll, no failed requests. Pages still show their
   old in-page titles on phones until R3–R5 convert them.
+- 2026-10-18 R3: Manage Lists rebuilt on the kit — one LISTS config replaces 12 copied handlers;
+  PageHeader with one primary "Add <value>", Tabs with counts, live search with a no-match state,
+  rows edit in place (Enter saves, Esc cancels, server errors shown under the field), colour
+  rows show swatch + hex with a colour picker in the editor, delete via ConfirmDialog, skeleton
+  loading and a retry state. No API change. Fixed: `max-md:` was silently dropped (raw `short:`
+  screen) so the page title showed twice on phones. Browser-checked at 390 and 1366 on the
+  Docker DB: add, duplicate error, rename, delete, bad hex, no-match, no horizontal scroll.
+  Later: Undo after delete needs a restore endpoint (names stay unique after soft delete).

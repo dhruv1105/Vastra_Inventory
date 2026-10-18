@@ -29,7 +29,7 @@ export default function PageHeader({ title, eyebrow, subtitle, action, back, cla
         )}
         {eyebrow && <span className="hidden text-xs font-semibold uppercase tracking-widest text-zari md:block">{eyebrow}</span>}
         {/* On phones the header bar already shows the screen name; keep the h1 for screen readers. */}
-        <h1 className="font-display text-3xl leading-tight text-fg text-balance max-md:sr-only">{title}</h1>
+        <h1 className="font-display text-3xl leading-tight text-fg text-balance sr-only md:not-sr-only">{title}</h1>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
         <Vine className="mt-2 hidden w-44 md:block" />
       </div>

@@ -122,6 +122,8 @@ Lenis / Vanta / React Bits stay out of the staff app (storefront, phase 2).
 - `window.confirm` / `alert` — use `ConfirmDialog` / toast.
 - A button, input, chip, card or empty state written inline in a page — use or extend the kit.
 - Card inside a card. Motif behind body text.
+- `max-sm:` / `max-md:` variants — Tailwind silently disables them because the config has a raw
+  `short:` screen. Write mobile-first instead (`sr-only md:not-sr-only`).
 
 ## 7. The kit — `components/ui/`
 

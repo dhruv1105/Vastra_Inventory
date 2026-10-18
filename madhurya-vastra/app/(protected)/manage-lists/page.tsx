@@ -1,327 +1,180 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, RotateCw, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/context/ToastContext";
+import PageHeader from "@/components/ui/PageHeader";
+import Tabs from "@/components/ui/Tabs";
+import Button from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import EmptyState from "@/components/ui/EmptyState";
+import { SkeletonRows } from "@/components/ui/Skeleton";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import LookupList from "@/components/lookups/LookupList";
-import { LookupItem } from "@/types";
+import type { LookupDraft } from "@/components/lookups/LookupEditor";
+import { byName, LISTS, lookupRequest, type ListKey } from "@/components/lookups/lists";
+import type { LookupItem } from "@/types";
 
-type Tab = "types" | "colors" | "occasions" | "tags";
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: "types", label: "Types" },
-  { key: "colors", label: "Colors" },
-  { key: "occasions", label: "Occasions" },
-  { key: "tags", label: "Tags" },
-];
+type Data = Record<ListKey, LookupItem[]>;
+const EMPTY: Data = { types: [], colors: [], occasions: [], tags: [] };
 
 export default function ManageListsPage() {
-  const router = useRouter();
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<Tab>("types");
+  const [tab, setTab] = useState<ListKey>("types");
+  const [data, setData] = useState<Data>(EMPTY);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [q, setQ] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<LookupItem | null>(null);
 
-  const [itemTypes, setItemTypes] = useState<LookupItem[]>([]);
-  const [colors, setColors] = useState<LookupItem[]>([]);
-  const [occasions, setOccasions] = useState<LookupItem[]>([]);
-  const [tags, setTags] = useState<LookupItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const list = LISTS.find((l) => l.key === tab)!;
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async () => {
+    setStatus("loading");
     try {
-      const [typesRes, colorsRes, occasionsRes, tagsRes] = await Promise.all([
-        fetch("/api/lookups/item-types"),
-        fetch("/api/lookups/colors"),
-        fetch("/api/lookups/occasions"),
-        fetch("/api/lookups/tags"),
-      ]);
-
-      const [typesData, colorsData, occasionsData, tagsData] = await Promise.all([
-        typesRes.json(),
-        colorsRes.json(),
-        occasionsRes.json(),
-        tagsRes.json(),
-      ]);
-
-      setItemTypes(typesData.data || []);
-      setColors(colorsData.data || []);
-      setOccasions(occasionsData.data || []);
-      setTags(tagsData.data || []);
+      const results = await Promise.all(LISTS.map((l) => lookupRequest<LookupItem[]>(`/api/lookups/${l.endpoint}`)));
+      setData(Object.fromEntries(LISTS.map((l, i) => [l.key, results[i] ?? []])) as Data);
+      setStatus("ready");
     } catch {
-      showToast("Failed to load data", "error");
-    } finally {
-      setLoading(false);
+      setStatus("error");
     }
-  }, [showToast]);
+  }, []);
 
   useEffect(() => {
-    loadAll();
-  }, [loadAll]);
+    void load();
+  }, [load]);
 
-  const handleAddItemType = async (name: string) => {
-    const res = await fetch("/api/lookups/item-types", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add");
-    setItemTypes((prev) =>
-      [...prev, data.data].sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast(`"${name}" added successfully`, "success");
+  const changeTab = (key: string) => {
+    setTab(key as ListKey);
+    setQ("");
+    setEditing(null);
   };
 
-  const handleEditItemType = async (id: string, name: string) => {
-    const res = await fetch(`/api/lookups/item-types/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to update");
-    setItemTypes((prev) =>
-      prev
-        .map((t) => (t.id === id ? data.data : t))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast("Updated successfully", "success");
+  const shown = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return needle ? data[tab].filter((i) => i.name.toLowerCase().includes(needle)) : data[tab];
+  }, [data, tab, q]);
+
+  const put = (key: ListKey, next: LookupItem[]) => setData((d) => ({ ...d, [key]: [...next].sort(byName) }));
+
+  const body = (draft: LookupDraft) =>
+    JSON.stringify({ name: draft.name, ...(list.hasColor ? { hexCode: draft.hexCode || null } : {}), userId: user?.id });
+
+  const create = async (draft: LookupDraft) => {
+    const item = await lookupRequest<LookupItem>(`/api/lookups/${list.endpoint}`, { method: "POST", body: body(draft) });
+    put(tab, [...data[tab], item]);
+    setEditing(null);
+    showToast(`Added “${item.name}”`, "success");
   };
 
-  const handleDeleteItemType = async (id: string) => {
-    const res = await fetch(`/api/lookups/item-types/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Failed to delete");
+  const update = async (id: string, draft: LookupDraft) => {
+    const item = await lookupRequest<LookupItem>(`/api/lookups/${list.endpoint}/${id}`, { method: "PATCH", body: body(draft) });
+    put(tab, data[tab].map((i) => (i.id === id ? item : i)));
+    setEditing(null);
+    showToast("Saved", "success");
+  };
+
+  const remove = async () => {
+    if (!toDelete) return;
+    try {
+      await lookupRequest(`/api/lookups/${list.endpoint}/${toDelete.id}`, { method: "DELETE", body: JSON.stringify({ userId: user?.id }) });
+      put(tab, data[tab].filter((i) => i.id !== toDelete.id));
+      showToast(`Deleted “${toDelete.name}”`, "success");
+      setToDelete(null);
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Could not delete. Try again.", "error");
     }
-    setItemTypes((prev) => prev.filter((t) => t.id !== id));
-    showToast("Deleted successfully", "success");
   };
 
-  const handleAddColor = async (name: string, extra?: Record<string, string>) => {
-    const res = await fetch("/api/lookups/colors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, hexCode: extra?.hexCode || null, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add");
-    setColors((prev) =>
-      [...prev, data.data].sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast(`"${name}" added successfully`, "success");
+  const startAdd = () => {
+    setQ("");
+    setEditing("new");
   };
-
-  const handleEditColor = async (id: string, name: string, extra?: Record<string, string>) => {
-    const res = await fetch(`/api/lookups/colors/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, hexCode: extra?.hexCode || null, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to update");
-    setColors((prev) =>
-      prev
-        .map((c) => (c.id === id ? data.data : c))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast("Updated successfully", "success");
-  };
-
-  const handleDeleteColor = async (id: string) => {
-    const res = await fetch(`/api/lookups/colors/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Failed to delete");
-    }
-    setColors((prev) => prev.filter((c) => c.id !== id));
-    showToast("Deleted successfully", "success");
-  };
-
-  const handleAddOccasion = async (name: string) => {
-    const res = await fetch("/api/lookups/occasions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add");
-    setOccasions((prev) =>
-      [...prev, data.data].sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast(`"${name}" added successfully`, "success");
-  };
-
-  const handleEditOccasion = async (id: string, name: string) => {
-    const res = await fetch(`/api/lookups/occasions/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to update");
-    setOccasions((prev) =>
-      prev
-        .map((o) => (o.id === id ? data.data : o))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast("Updated successfully", "success");
-  };
-
-  const handleDeleteOccasion = async (id: string) => {
-    const res = await fetch(`/api/lookups/occasions/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Failed to delete");
-    }
-    setOccasions((prev) => prev.filter((o) => o.id !== id));
-    showToast("Deleted successfully", "success");
-  };
-
-  const handleAddTag = async (name: string) => {
-    const res = await fetch("/api/lookups/tags", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to add");
-    setTags((prev) =>
-      [...prev, data.data].sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast(`"${name}" added successfully`, "success");
-  };
-
-  const handleEditTag = async (id: string, name: string) => {
-    const res = await fetch(`/api/lookups/tags/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, userId: user?.id }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to update");
-    setTags((prev) =>
-      prev
-        .map((t) => (t.id === id ? data.data : t))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    );
-    showToast("Updated successfully", "success");
-  };
-
-  const handleDeleteTag = async (id: string) => {
-    const res = await fetch(`/api/lookups/tags/${id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.error || "Failed to delete");
-    }
-    setTags((prev) => prev.filter((t) => t.id !== id));
-    showToast("Deleted successfully", "success");
-  };
-
-  const withErrorToast = <T extends unknown[]>(fn: (...args: T) => Promise<void>) =>
-    async (...args: T) => {
-      try {
-        await fn(...args);
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "Something went wrong", "error");
-      }
-    };
 
   return (
-    <div className="min-h-screen bg-brand-background">
-      {/* Page header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-brand-secondary/20 px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={() => router.back()}
-          className="p-1.5 text-brand-text-muted hover:text-brand-primary hover:bg-brand-secondary/10 rounded-md transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="font-serif text-xl font-semibold text-brand-primary">
-          Manage Lists
-        </h1>
+    <div className="mv-stagger mx-auto grid max-w-5xl gap-5 px-4 py-5 md:px-7 md:py-7">
+      <PageHeader
+        eyebrow="Shop settings"
+        title="Manage Lists"
+        subtitle="The choices staff pick from when adding an item."
+        action={
+          <Button icon={<Plus />} onClick={startAdd} disabled={status !== "ready"}>
+            Add {list.singular}
+          </Button>
+        }
+      />
+
+      <div className="grid gap-4">
+        <Tabs
+          label="Lists"
+          idPrefix="lists"
+          tabs={LISTS.map((l) => ({ id: l.key, label: l.label, count: status === "ready" ? data[l.key].length : undefined }))}
+          value={tab}
+          onChange={changeTab}
+        />
+
+        <div id={`lists-panel-${tab}`} role="tabpanel" aria-labelledby={`lists-tab-${tab}`} className="grid gap-3">
+          {status === "loading" && <SkeletonRows rows={6} label={`Loading ${list.label.toLowerCase()}`} />}
+
+          {status === "error" && (
+            <EmptyState compact title="The lists didn’t load" action={<Button variant="secondary" icon={<RotateCw />} onClick={load}>Try again</Button>}>
+              The server could not be reached. Check that the app is running, then try again.
+            </EmptyState>
+          )}
+
+          {status === "ready" && (
+            <>
+              <Input
+                type="search"
+                leading={<Search />}
+                aria-label={`Search ${list.label.toLowerCase()}`}
+                placeholder={`Search ${list.label.toLowerCase()}`}
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+
+              {shown.length > 0 || editing === "new" ? (
+                <>
+                  <LookupList
+                    list={list}
+                    items={shown}
+                    editing={editing}
+                    onStartEdit={setEditing}
+                    onCancel={() => setEditing(null)}
+                    onCreate={create}
+                    onUpdate={update}
+                    onAskDelete={setToDelete}
+                  />
+                  <p className="text-sm text-muted" aria-live="polite">
+                    {q.trim() ? `${shown.length} of ${data[tab].length} ${list.label.toLowerCase()}` : `${data[tab].length} ${list.label.toLowerCase()}`}
+                  </p>
+                </>
+              ) : q.trim() ? (
+                <EmptyState compact title={`No ${list.label.toLowerCase()} match “${q.trim()}”`} action={<Button variant="secondary" onClick={() => setQ("")}>Clear search</Button>}>
+                  Check the spelling, or add it as a new {list.singular}.
+                </EmptyState>
+              ) : (
+                <EmptyState compact title={`No ${list.label.toLowerCase()} yet`} action={<Button icon={<Plus />} onClick={startAdd}>Add {list.singular}</Button>}>
+                  Staff pick from this list when adding an item. Add the first one.
+                </EmptyState>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-brand-secondary/20 px-4 flex gap-1 overflow-x-auto">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === tab.key
-                ? "border-brand-primary text-brand-primary font-semibold"
-                : "border-transparent text-brand-text-muted hover:text-brand-primary"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
-      <div className="p-4 md:p-6 max-w-2xl lg:max-w-5xl mx-auto pb-[calc(var(--bottom-nav-h)+2rem)] md:pb-8">
-        {activeTab === "types" && (
-          <LookupList
-            title="Types"
-            items={itemTypes}
-            onAdd={withErrorToast(handleAddItemType)}
-            onEdit={withErrorToast(handleEditItemType)}
-            onDelete={withErrorToast(handleDeleteItemType)}
-            loading={loading}
-          />
-        )}
-        {activeTab === "colors" && (
-          <LookupList
-            title="Colors"
-            items={colors}
-            onAdd={withErrorToast(handleAddColor)}
-            onEdit={withErrorToast(handleEditColor)}
-            onDelete={withErrorToast(handleDeleteColor)}
-            showColorSwatch
-            loading={loading}
-          />
-        )}
-        {activeTab === "occasions" && (
-          <LookupList
-            title="Occasions"
-            items={occasions}
-            onAdd={withErrorToast(handleAddOccasion)}
-            onEdit={withErrorToast(handleEditOccasion)}
-            onDelete={withErrorToast(handleDeleteOccasion)}
-            loading={loading}
-          />
-        )}
-        {activeTab === "tags" && (
-          <LookupList
-            title="Tags"
-            items={tags}
-            onAdd={withErrorToast(handleAddTag)}
-            onEdit={withErrorToast(handleEditTag)}
-            onDelete={withErrorToast(handleDeleteTag)}
-            loading={loading}
-          />
-        )}
-      </div>
+      <ConfirmDialog
+        open={!!toDelete}
+        title={`Delete “${toDelete?.name ?? ""}”?`}
+        confirmLabel="Delete"
+        cancelLabel="Keep it"
+        onCancel={() => setToDelete(null)}
+        onConfirm={remove}
+      >
+        It disappears from the choices on Add Item. Items that already use “{toDelete?.name}” keep it.
+      </ConfirmDialog>
     </div>
   );
 }
