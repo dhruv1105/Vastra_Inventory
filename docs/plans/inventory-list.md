@@ -218,3 +218,7 @@ or colours until the flag is turned off, as an explicit action in the edit UI.
   and rejects the flag unless the item is exactly one "One Size" variant with no colour. GET reads
   the column. `ONE_SIZE` lives in `lib/inventory.ts` (shared with Add Item). 8 more tests (98 total)
   and the database test checks the flag. Production build passes.
+- **Step 2 done (2026-10-18).** `components/ui/Badge.tsx`: non-interactive status label with
+  tones neutral / primary / zari (needs attention) / success / danger and an optional icon. Text
+  is always present, so state never depends on colour alone. Added to `/kit` ("Badges"). Checked at
+  390 px in light and dark.
