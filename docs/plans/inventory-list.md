@@ -196,3 +196,17 @@ expression, so switching to the column changes one line.
    card say "from ₹1,799"? I propose **item price only** for now; overrides show on the item page.
 5. **Status badge on active items:** the rules say "show the normal case quietly". I propose a
    subtle green "Active" badge and a stronger "Draft" badge. Or show only Draft?
+
+## Progress
+
+- **Step 1 done (2026-10-18).** `GET /api/items` (beside POST) with `lib/inventory.ts` (shared:
+  `PAGE_SIZE`, `LOW_STOCK_AT`, `SEARCH_MAX`, `LIST_STATUSES`, `STATUS_BADGE`, `isLowStock`,
+  `InventoryItem`) and `lib/inventory-query.ts` (server: `toPrefixQuery`, cursor encode/decode).
+  The response is built field by field, so a cost column can never leak through. Tests: 13 route
+  tests in `tests/api/items.test.ts`, 8 unit tests in `tests/lib/inventory.test.ts` (90 total), and
+  `tests/db/items-list.db.test.ts` (`npm run test:db`). It passed on Postgres 16, can be re-run
+  and deletes its rows. With the cursor switched to `created_at` alone, it fails — the last 5
+  items are never returned. EXPLAIN on 3,000 items: search → Bitmap Index Scan on
+  `items_live_title_search_idx`; variants → `variants_item_idx`. Without search, Postgres chose a
+  sequential scan + sort at that size.
+  **Not verified:** the Docker dev stack (unavailable in the cloud session); the screen (step 3).
