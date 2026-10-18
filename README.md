@@ -42,6 +42,14 @@ npm run db:migrate && npm run db:seed:dev
 npm run dev
 ```
 
+## Optional sign-in methods
+
+**Google** (existing accounts only — the owner adds the person's email on the Staff screen first):
+1. Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → Web application.
+2. Authorised redirect URI: `http://localhost:3000/api/auth/callback/google` (and the real domain later).
+3. Put the ID and secret in `.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, then
+   `./scripts/dev-up.sh`. The "Continue with Google" button appears; with empty values it stays hidden.
+
 ## Changing the database
 
 1. Edit `madhurya-vastra/db/schema.ts`.

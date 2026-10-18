@@ -123,3 +123,10 @@ Customer accounts, two-factor auth, audit screen, email verification flows.
   Browser-checked end to end with an owner and a new seller: add → temp password → forced change →
   app works; reset → seller's next call 401; role both ways; turned off → "This account is turned
   off…"; turned on again; staff list on a phone without horizontal scroll.
+- **A5 done (2026-10-18).** Google sign-in on only when GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
+  are set (`signInOptions()`, read at request time by the server part of the login page).
+  `disableSignUp`: Google never creates accounts; first use links to the account with the same
+  email (trusted provider). Google errors return to /login with a plain explanation. Setup steps in
+  the README. Checked: no button without keys; with placeholder keys the button goes to
+  accounts.google.com with the right client id, callback URL and account chooser; the error
+  message shows. **Not verified:** a real Google round trip — needs real keys.

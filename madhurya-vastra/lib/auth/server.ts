@@ -21,6 +21,17 @@ if (!secret && process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !
 
 const DAY = 60 * 60 * 24;
 
+/** Google sign-in is on only when both keys are set (auth A5). Existing accounts only. */
+const googleKeys =
+  process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? { clientId: process.env.GOOGLE_CLIENT_ID, clientSecret: process.env.GOOGLE_CLIENT_SECRET }
+    : null;
+
+/** Which sign-in methods the login screen offers. Read at request time on the server. */
+export function signInOptions() {
+  return { google: !!googleKeys };
+}
+
 export const auth = betterAuth({
   appName: "Madhurya Vastra",
   // Development falls back to a fixed secret so the stack starts without setup; production fails fast above.
@@ -41,6 +52,20 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     password: { hash: hashPassword, verify: verifyPassword },
     revokeSessionsOnPasswordReset: true,
+  },
+  socialProviders: googleKeys
+    ? {
+        google: {
+          ...googleKeys,
+          // Staff are added by the owner; Google never creates an account.
+          disableSignUp: true,
+          prompt: "select_account",
+        },
+      }
+    : {},
+  account: {
+    // First Google sign-in links to the existing account with the same email.
+    accountLinking: { enabled: true, trustedProviders: ["google"] },
   },
   user: {
     additionalFields: {
