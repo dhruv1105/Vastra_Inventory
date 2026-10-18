@@ -31,11 +31,11 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 - [x] R1.7 Motion: GSAP (lazy), Intro + useIntroOnce, `.mv-stagger` page entrance, reduced-motion
 - [x] R2 Shell: header title, Manage Lists in nav, account menu + theme, sidebar rail, intro
 - [x] R3 Manage Lists on the kit
-- [ ] R4.1 Add Item split into section components (no visual change)
-- [ ] R4.2 Add Item section nav + collapsible sections
-- [ ] R4.3 Variant grid: blank cells, fill row/column/all
-- [ ] R4.4 Images: preview, alt text
-- [ ] R4.5 Error summary, Draft explained, ConfirmDialog
+- [x] R4.1 Add Item split into section components (no visual change)
+- [x] R4.2 Add Item section nav + collapsible sections
+- [x] R4.3 Variant grid: blank cells, fill row/column/all
+- [x] R4.4 Images: preview, alt text
+- [x] R4.5 Error summary, Draft explained, ConfirmDialog
 - [ ] R5 Login restyle + shared EmptyState on placeholders
 - [ ] R6 Regression screenshots + new screens.pdf
 
@@ -81,3 +81,16 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
   screen) so the page title showed twice on phones. Browser-checked at 390 and 1366 on the
   Docker DB: add, duplicate error, rename, delete, bad hex, no-match, no horizontal scroll.
   Later: Undo after delete needs a restore endpoint (names stay unique after soft delete).
+- 2026-10-18 R4: Add Item rebuilt as one item (split + restyle together, since the page was
+  rewritten anyway). 474-line page → page orchestrator + form.ts (validation, section status,
+  unchanged POST body) + Photos/Details/Classify/Price/Variants sections + SectionNav. New:
+  jump bar (ticks / red), error summary with links that focus the field, blank grid cells with
+  fill row/column/all, size + colour menus with chips to remove, price-per-variant fold,
+  photo preview dialog (alt text, reorder, make cover, remove), inline "new item type" dialog,
+  margin pill (red "below cost"), "save without photos?" ConfirmDialog, draft explained in the
+  action bar. Kit: Dialog base (ConfirmDialog now uses it), Button "danger-ghost", Input skips
+  its default w-full when given a width. Fixed during checks: grid column min-width let the
+  jump bar widen the page; sr-only text escaped the chip scroller. Browser-checked at 390 and
+  1366 on the Docker DB: errors → summary → fix → sizes/colours → fill → photo + alt → saved;
+  rows match in Postgres (variants 3/3/3/5, alt "Front drape"). Not tested: Collapsible
+  sections were not needed once the jump bar existed (not built).

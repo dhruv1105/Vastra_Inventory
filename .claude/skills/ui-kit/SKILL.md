@@ -122,6 +122,8 @@ Lenis / Vanta / React Bits stay out of the staff app (storefront, phase 2).
 - `window.confirm` / `alert` — use `ConfirmDialog` / toast.
 - A button, input, chip, card or empty state written inline in a page — use or extend the kit.
 - Card inside a card. Motif behind body text.
+- Two width classes on one element (`w-full` from a kit default + your `w-16`): CSS order decides,
+  not the string. Kit components drop their default width when you pass one; do the same in new ones.
 - `max-sm:` / `max-md:` variants — Tailwind silently disables them because the config has a raw
   `short:` screen. Write mobile-first instead (`sr-only md:not-sr-only`).
 
@@ -140,7 +142,7 @@ Built in redesign R1. Until a piece exists, the closest existing component is th
 | `PageHeader` (display-font title, back, one primary action) | in-page `<h1>`s |
 | `EmptyState` (`mark.png`, accent-font title, why, next action) | Inventory dashed card, Sales/Dashboard text |
 | `Skeleton`, `Loader` (three pulsing dots) | spinner in `(protected)/layout.tsx` |
-| `ConfirmDialog` | `window.confirm` in `items/new` |
+| `Dialog` (base: bottom sheet / centred, focus trap) and `ConfirmDialog` | `window.confirm` in `items/new` |
 | `Toast` | `context/ToastContext.tsx` (restyle onto tokens) |
 | `Tabs`, `Menu` (outside click + Esc closes) | Manage Lists tabs, header user dropdown |
 | `Intro` (GSAP timeline, skippable, reduced-motion aware) | — new |

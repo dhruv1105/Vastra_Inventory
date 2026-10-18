@@ -94,7 +94,7 @@ export default function ManageListsPage() {
   };
 
   return (
-    <div className="mv-stagger mx-auto grid max-w-5xl gap-5 px-4 py-5 md:px-7 md:py-7">
+    <div className="mv-stagger mx-auto grid max-w-5xl grid-cols-1 gap-5 px-4 py-5 md:px-7 md:py-7">
       <PageHeader
         eyebrow="Shop settings"
         title="Manage Lists"

@@ -2,7 +2,7 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import Loader from "./Loader";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "danger-ghost";
 export type ButtonSize = "sm" | "md";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -27,6 +27,8 @@ const variants: Record<ButtonVariant, string> = {
   secondary: "border border-primary-soft bg-surface text-primary hover:bg-tint",
   ghost: "text-primary hover:bg-tint",
   danger: "bg-danger text-surface hover:bg-danger/90",
+  /** Secondary destructive action next to others (e.g. Remove photo). */
+  "danger-ghost": "text-danger hover:bg-danger-tint",
 };
 
 const sizes: Record<ButtonSize, string> = {
