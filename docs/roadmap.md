@@ -20,7 +20,8 @@ Done: UI redesign (R0–R6), real authentication (A1–A6), inventory list (step
    `TEST_DATABASE_URL`) and `npm run build`. Branch protection: `main` merges only when it is
    green. Needed before hosting, so nothing broken gets deployed. (Not built yet.)
 5. **S3 photo storage + hosting** — one storage helper (local disk in development, S3 in
-   production), then host the app (see "Hosting" below).
+   production), then host the app (see "Hosting" below). Includes **cleaning up orphaned photo
+   files**: removed photos are soft-deleted rows whose files stay on disk (item edit, 2026-10-18).
 6. **Stock-movement ledger** — purchase, sale, return, adjustment recorded as rows; current
    quantity derived (see [decisions](decisions/README.md)).
 7. **Mark as sold** — record a sale against a variant through the ledger.
