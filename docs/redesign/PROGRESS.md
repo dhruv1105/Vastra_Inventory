@@ -113,5 +113,5 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 ## Later (found during the redesign, not built)
 - Undo after deleting a list value: needs a restore endpoint (names stay unique after soft delete).
 - Re-adding a deleted list name returns 409 (unique name incl. soft-deleted rows).
-- Login is held in memory: a reload signs out (fixed by real auth).
-- Server trusts userId from the request body (fixed by real auth; flagged by security review).
+- ~~Login is held in memory: a reload signs out~~ — closed by real auth (A2: sessions survive reloads).
+- ~~Server trusts userId from the request body~~ — closed by real auth (A3: the session user is recorded; `userId` removed from request bodies).
