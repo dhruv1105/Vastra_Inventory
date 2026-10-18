@@ -27,31 +27,17 @@ const config: Config = {
         success: { DEFAULT: c("success"), tint: c("success-tint") },
         danger: { DEFAULT: c("danger"), tint: c("danger-tint") },
         lavender: { DEFAULT: c("lavender"), glow: c("lavender-glow") },
-        // Legacy names, kept so screens not yet redesigned keep working. Removed in redesign R6.
-        brand: {
-          primary: c("primary"),
-          secondary: c("primary-soft"),
-          accent: c("zari"),
-          background: c("canvas"),
-          surface: c("surface"),
-          text: { primary: c("fg"), muted: c("muted") },
-        },
       },
       fontFamily: {
         brand: ["var(--mv-font-brand)"],
         display: ["var(--mv-font-display)"],
         accent: ["var(--mv-font-accent)"],
         sans: ["var(--mv-font-ui)"],
-        // Legacy: font-serif was the wordmark font.
-        serif: ["var(--mv-font-brand)"],
       },
       borderRadius: {
         sm: "var(--mv-radius-sm)",
         md: "var(--mv-radius-md)",
         lg: "var(--mv-radius-lg)",
-        // Legacy names.
-        card: "var(--mv-radius-lg)",
-        input: "var(--mv-radius-md)",
       },
       transitionDuration: {
         fast: "var(--mv-dur-fast)",

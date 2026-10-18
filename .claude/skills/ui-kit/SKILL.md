@@ -32,16 +32,16 @@ and the Instagram tile (lavender backdrop). Approved in R0.
 **Where values live:** `lib/theme/presets.ts` (the only place hex values are written) →
 `lib/theme/css.ts` renders `--mv-*` variables (RGB channels) → `app/layout.tsx` injects them →
 `tailwind.config.ts` maps classes to them. To change a colour, edit the preset — never Tailwind
-or a component. Dark applies with `<html data-theme="dark">`; following the OS setting is
-switched on in R6.
+or a component. Dark follows the phone/computer setting ("System", the default) or
+an explicit choice (`<html data-theme="dark|light">`).
 
 **Tailwind classes:** `bg-canvas` (page) · `bg-surface` · `text-fg` · `text-muted` ·
 `border-line` · `bg-primary` / `hover:bg-primary-hover` / `text-primary-on` · `primary-soft` ·
 `bg-tint` / `bg-tint-strong` · `text-zari` / `bg-zari-tint` · `success` / `success-tint` ·
 `danger` / `danger-tint`. Opacity works: `bg-primary/10`. Fonts: `font-brand` (wordmark only),
 `font-display`, `font-accent`, `font-sans` (UI). Radius: `rounded-sm|md|lg` (6/10/16px) and
-`rounded-full`. Motion: `duration-fast|base|slow`, `ease-brand`. The old `brand-*`, `font-serif`,
-`rounded-card|input` names still work for unconverted screens and are removed in R6.
+`rounded-full`. Motion: `duration-fast|base|slow`, `ease-brand`. Layers: `z-nav|menu|toast|dialog`.
+(The old `brand-*`, `font-serif` and `rounded-card|input` names were removed in R6.)
 
 | Token | Light | Dark | Use |
 |---|---|---|---|
@@ -63,9 +63,9 @@ Brand gradient (headers of login/intro, never behind body text):
 Old values `#6B3FA0` / `#9B6FD0` / `#C9A84C` are retired by R1.
 
 **Dark mode:** `context/ThemeContext.tsx` (choice saved in localStorage, applied before paint by
-`themeBootScript`) + `components/ui/ThemeSwitch.tsx` (goes in the user menu in R2). Following the
-OS setting is behind `FOLLOW_SYSTEM_THEME` in `lib/theme/presets.ts` — off until R6, so the
-switch offers Light / Dark only. `bg-lavender` / `lavender-glow` stay light in dark mode (logo
+`themeBootScript`) + `components/ui/ThemeSwitch.tsx` in the account menu: System / Light / Dark
+(`FOLLOW_SYSTEM_THEME` in `lib/theme/presets.ts`, on since R6). Every new screen must be checked
+in both themes. `bg-lavender` / `lavender-glow` stay light in dark mode (logo
 backdrop). Low priority — it must work and be readable, not be polished screen by screen.
 
 ## 3. Typography — Indian feel, readable UI

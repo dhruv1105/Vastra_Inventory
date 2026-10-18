@@ -1,7 +1,8 @@
 # UI redesign: plan
 
-Status: **Draft for review — nothing built** · Date: 2026-10-17
-Baseline: [../screens.pdf](../screens.pdf) (all screens at 4 sizes + UI/UX observations page).
+Status: **Done (R0–R6), 2026-10-18** · Plan written 2026-10-17
+Before: [screens-before.pdf](screens-before.pdf) (all screens at 4 sizes + UI/UX observations page).
+After: [../screens.pdf](../screens.pdf) (every screen at 4 sizes, light and dark).
 Progress and resume notes: [PROGRESS.md](PROGRESS.md).
 
 ## 1. Verdict

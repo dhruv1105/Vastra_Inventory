@@ -69,8 +69,7 @@ export const fontSets: Record<"a" | "b" | "c", FontRoles> = {
 export const activeTheme = madhuryaTheme;
 
 /**
- * Follow the phone/computer dark setting. Off until every screen uses theme tokens (redesign R6):
- * a half-converted screen would show light-only colours on a dark page. While off, the theme
- * switch offers Light and Dark only.
+ * Follow the phone/computer dark setting by default ("System" in the theme switch). Turned on in
+ * redesign R6 once every screen used theme tokens.
  */
-export const FOLLOW_SYSTEM_THEME = false;
+export const FOLLOW_SYSTEM_THEME = true;

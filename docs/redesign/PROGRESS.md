@@ -37,7 +37,7 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 - [x] R4.4 Images: preview, alt text
 - [x] R4.5 Error summary, Draft explained, ConfirmDialog
 - [x] R5 Login restyle + shared EmptyState on placeholders
-- [ ] R6 Regression screenshots + new screens.pdf
+- [x] R6 Regression screenshots + new screens.pdf
 
 ## Log
 
@@ -102,3 +102,16 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
   nav) and the empty state links to Add Item. Kit: LinkButton, Button "outline". No old
   palette/arbitrary classes remain in app/ or components/. Browser-checked at all 4 sizes.
   Also: server-side alt-text check on POST /api/items (security review of R4).
+
+- 2026-10-18 R6: legacy Tailwind names (brand-*, font-serif, rounded-card/input) removed — nothing
+  used them; theme now follows the OS by default (FOLLOW_SYSTEM_THEME on, "System" in the switch).
+  Regression: 9 screens × 4 sizes × light/dark = 72 screenshots on the Docker stack — no horizontal
+  scroll, no console errors or failed requests, dark canvas rgb(22,17,31) via the OS setting.
+  docs/screens.pdf regenerated (cover + 18 pages); the old one is docs/redesign/screens-before.pdf.
+  Production build passes. Redesign complete.
+
+## Later (found during the redesign, not built)
+- Undo after deleting a list value: needs a restore endpoint (names stay unique after soft delete).
+- Re-adding a deleted list name returns 409 (unique name incl. soft-deleted rows).
+- Login is held in memory: a reload signs out (fixed by real auth).
+- Server trusts userId from the request body (fixed by real auth; flagged by security review).

@@ -13,9 +13,9 @@ Inventory and (later) online store for **Madhurya Vastra**, one women's ethnic-w
 | **1 — now** | Owner and sellers (staff), mostly on phones in the shop | Add/edit items, stock, lists, sales, dashboard |
 | **2 — later** | Customers, on web and phone | Storefront, cart, orders, online payment |
 
-Current work: **UI redesign of everything built so far** — plan and progress in
-[docs/redesign/](docs/redesign/README.md). Real authentication (Auth.js / better-auth) comes
-**after** the redesign; do not touch auth during it.
+The UI redesign (R0–R6) is done: every screen uses the shared kit in `components/ui/` — see
+[docs/redesign/](docs/redesign/README.md) and the screen catalogue [docs/screens.pdf](docs/screens.pdf).
+Next, per the roadmap: real authentication (Auth.js / better-auth), then the inventory list.
 
 Full brief: [docs/brief.md](docs/brief.md).
 
