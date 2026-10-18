@@ -39,7 +39,7 @@ export async function loadItemFull(id: string, run: Run = viaPool): Promise<Item
   );
   if (itemRes.rows.length === 0) return null;
 
-  const [occasions, tags, variants, images] = await Promise.all([
+  const [occasions, tags, designColors, variants, images] = await Promise.all([
     run(
       `SELECT o.id, o.name, o.created_at AS "createdAt"
        FROM item_occasions io JOIN occasions o ON o.id = io.occasion_id
@@ -50,6 +50,12 @@ export async function loadItemFull(id: string, run: Run = viaPool): Promise<Item
       `SELECT t.id, t.name, t.created_at AS "createdAt"
        FROM item_tags it JOIN tags t ON t.id = it.tag_id
        WHERE it.item_id = $1 ORDER BY t.name`,
+      [id]
+    ),
+    run(
+      `SELECT c.id, c.name, c.hex_code AS "hexCode", c.hex_code_2 AS "hexCode2", c.created_at AS "createdAt"
+       FROM item_colors ic JOIN colors c ON c.id = ic.color_id
+       WHERE ic.item_id = $1 ORDER BY c.name`,
       [id]
     ),
     run(
@@ -71,8 +77,9 @@ export async function loadItemFull(id: string, run: Run = viaPool): Promise<Item
   ]);
 
   return {
-    ...(itemRes.rows[0] as Omit<Item, "occasions" | "tags" | "variants" | "images">),
+    ...(itemRes.rows[0] as Omit<Item, "occasions" | "tags" | "designColors" | "variants" | "images">),
     occasions: occasions.rows,
+    designColors: designColors.rows,
     tags: tags.rows,
     variants: variants.rows,
     images: images.rows,
@@ -101,6 +108,7 @@ export function toSellerItem(item: Item): ItemSellerView {
     updatedBy: item.updatedBy && { id: item.updatedBy.id, name: item.updatedBy.name },
     version: item.version,
     occasions: item.occasions.map((o) => ({ id: o.id, name: o.name, createdAt: o.createdAt })),
+    designColors: item.designColors.map((c) => ({ id: c.id, name: c.name, hexCode: c.hexCode, hexCode2: c.hexCode2, createdAt: c.createdAt })),
     tags: item.tags.map((t) => ({ id: t.id, name: t.name, createdAt: t.createdAt })),
     variants: item.variants.map((v) => ({
       id: v.id,

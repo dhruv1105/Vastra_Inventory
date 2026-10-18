@@ -191,6 +191,9 @@ export async function POST(request: Request) {
         [itemId, tagId, userId]
       );
     }
+    for (const colorId of f.designColorIds) {
+      await client.query(`INSERT INTO item_colors (item_id, color_id, created_by, updated_by) VALUES ($1, $2, $3, $3)`, [itemId, colorId, userId]);
+    }
 
     for (const img of images.value) {
       await insertImage(client, files, itemId, img, img.displayOrder, userId);

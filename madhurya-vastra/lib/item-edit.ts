@@ -152,6 +152,7 @@ export async function editItem(id: string, raw: unknown, user: GuardUser): Promi
     const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
     const occasionsBefore = before.occasions.map((o) => o.id);
     const tagsBefore = before.tags.map((t) => t.id);
+    const designBefore = before.designColors.map((c) => c.id);
     const fieldsChanged =
       f.title !== before.title ||
       f.description !== (before.description ?? null) ||
@@ -161,7 +162,8 @@ export async function editItem(id: string, raw: unknown, user: GuardUser): Promi
       costPrice !== (before.costPrice ?? null) ||
       body.isOneOfAKind !== before.isOneOfAKind ||
       !sameSet(f.occasionIds, occasionsBefore) ||
-      !sameSet(f.tagIds, tagsBefore);
+      !sameSet(f.tagIds, tagsBefore) ||
+      !sameSet(f.designColorIds, designBefore);
 
     const nothingToDo =
       !fieldsChanged && removed.length + toAdd.length + toUpdate.length + droppedPhotos.length + added.value.length + photoEdits.length === 0;
@@ -190,17 +192,18 @@ export async function editItem(id: string, raw: unknown, user: GuardUser): Promi
       );
     }
 
-    const addOccasions = f.occasionIds.filter((x) => !occasionsBefore.includes(x));
-    const dropOccasions = occasionsBefore.filter((x) => !f.occasionIds.includes(x));
-    if (dropOccasions.length) await client.query(`DELETE FROM item_occasions WHERE item_id = $1 AND occasion_id = ANY($2::uuid[])`, [id, dropOccasions]);
-    for (const o of addOccasions) {
-      await client.query(`INSERT INTO item_occasions (item_id, occasion_id, created_by, updated_by) VALUES ($1, $2, $3, $3)`, [id, o, user.id]);
-    }
-    const addTags = f.tagIds.filter((x) => !tagsBefore.includes(x));
-    const dropTags = tagsBefore.filter((x) => !f.tagIds.includes(x));
-    if (dropTags.length) await client.query(`DELETE FROM item_tags WHERE item_id = $1 AND tag_id = ANY($2::uuid[])`, [id, dropTags]);
-    for (const t of addTags) {
-      await client.query(`INSERT INTO item_tags (item_id, tag_id, created_by, updated_by) VALUES ($1, $2, $3, $3)`, [id, t, user.id]);
+    // Link lists, replaced by difference. Table and column names are constants, never input.
+    const links = [
+      ["item_occasions", "occasion_id", occasionsBefore, f.occasionIds],
+      ["item_tags", "tag_id", tagsBefore, f.tagIds],
+      ["item_colors", "color_id", designBefore, f.designColorIds],
+    ] as const;
+    for (const [table, column, was, now] of links) {
+      const drop = was.filter((x) => !now.includes(x));
+      if (drop.length) await client.query(`DELETE FROM ${table} WHERE item_id = $1 AND ${column} = ANY($2::uuid[])`, [id, drop]);
+      for (const x of now.filter((y) => !was.includes(y))) {
+        await client.query(`INSERT INTO ${table} (item_id, ${column}, created_by, updated_by) VALUES ($1, $2, $3, $3)`, [id, x, user.id]);
+      }
     }
 
     if (droppedPhotos.length) {
@@ -260,7 +263,7 @@ export function diffItems(before: Item, after: Item) {
       a[k] = after[k] ?? null;
     }
   }
-  for (const k of ["occasions", "tags"] as const) {
+  for (const k of ["occasions", "tags", "designColors"] as const) {
     const was = before[k].map((x) => x.name);
     const now = after[k].map((x) => x.name);
     if (was.join("\n") !== now.join("\n")) {

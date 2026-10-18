@@ -39,11 +39,15 @@ export type ItemFields = {
   costPrice: number | null;
   occasionIds: string[];
   tagIds: string[];
+  /** Colours in the design (item_colors): how every piece looks, not stock. */
+  designColorIds: string[];
 };
+
+export const DESIGN_COLORS_MAX = 10;
 
 /** Title, description, type, wear type, prices, occasions and tags. */
 export function readItemFields(body: Record<string, unknown>): Checked<ItemFields> {
-  const { title, description, itemTypeId, wearType, sellingPrice, costPrice, occasionIds = [], tagIds = [] } = body;
+  const { title, description, itemTypeId, wearType, sellingPrice, costPrice, occasionIds = [], tagIds = [], designColorIds = [] } = body;
   if (!title || !String(title).trim()) return { error: "Title is required" };
   if (String(title).trim().length > 150) return { error: "Title must be 150 characters or less" };
   if (description && String(description).length > 500) return { error: "Description must be 500 characters or less" };
@@ -53,6 +57,9 @@ export function readItemFields(body: Record<string, unknown>): Checked<ItemField
   if (itemTypeId != null && itemTypeId !== "" && !isId(itemTypeId)) return { error: "Invalid item type" };
   if (!Array.isArray(occasionIds) || !Array.isArray(tagIds)) return { error: "Invalid request body" };
   if (!occasionIds.every(isId) || !tagIds.every(isId)) return { error: "Invalid occasion or tag" };
+  if (!Array.isArray(designColorIds) || !designColorIds.every(isId)) return { error: "Invalid colour" };
+  const designColors = Array.from(new Set(designColorIds));
+  if (designColors.length > DESIGN_COLORS_MAX) return { error: `Choose at most ${DESIGN_COLORS_MAX} colours for the design` };
   return {
     value: {
       title: String(title).trim(),
@@ -63,6 +70,7 @@ export function readItemFields(body: Record<string, unknown>): Checked<ItemField
       costPrice: costPrice ?? null,
       occasionIds: Array.from(new Set(occasionIds)),
       tagIds: Array.from(new Set(tagIds)),
+      designColorIds: designColors,
     },
   };
 }

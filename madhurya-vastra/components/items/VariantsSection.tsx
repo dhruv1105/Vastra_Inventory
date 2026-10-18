@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Palette, Plus, X } from "lucide-react";
+import { ChevronDown, Palette, Plus } from "lucide-react";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/cn";
 import type { ItemFormData, LookupItem } from "@/types";
 import type { Errors } from "./form";
 import ColorPicker from "./ColorPicker";
+import ColorChip from "./ColorChip";
 import { SIZE_CHOICES, normalizeSize, orderSizes, sizeKey } from "@/lib/sizes";
 
 type Props = {
@@ -188,13 +189,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
             <Field id="item-colours" label="Colours" group>
               <div role="group" aria-labelledby="item-colours-label" className="flex flex-wrap gap-2">
                 {form.colorIds.map((c) => (
-                  <span key={c} className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-tint py-0.5 pl-2 pr-1 text-sm font-semibold text-primary">
-                    <Swatch hex={colorById(c)?.hexCode} hex2={colorById(c)?.hexCode2} />
-                    {colorById(c)?.name}
-                    <button type="button" aria-label={`Remove colour ${colorById(c)?.name}`} onClick={() => removeColor(c)} className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-danger-tint hover:text-danger">
-                      <X aria-hidden="true" className="h-3.5 w-3.5" />
-                    </button>
-                  </span>
+                  <ColorChip key={c} color={colorById(c)} removeLabel={`Remove colour ${colorById(c)?.name}`} onRemove={() => removeColor(c)} />
                 ))}
                 <Button size="sm" variant="secondary" icon={<Palette />} onClick={() => setPicking(true)}>
                   {form.colorIds.length ? "Change colours" : "Choose colours"}

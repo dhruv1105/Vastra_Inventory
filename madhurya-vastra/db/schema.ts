@@ -242,6 +242,20 @@ export const itemTags = pgTable(
   (t) => [primaryKey({ columns: [t.itemId, t.tagId] }), index("item_tags_tag_idx").on(t.tagId)],
 );
 
+/**
+ * Colours in an item's design (e.g. red with a gold border): describes how every piece looks, for
+ * finding the item later. Stock is not counted here — that is per variant colour.
+ */
+export const itemColors = pgTable(
+  "item_colors",
+  {
+    itemId: uuid("item_id").notNull().references(() => items.id, { onDelete: "cascade" }),
+    colorId: uuid("color_id").notNull().references(() => colors.id),
+    ...audit(),
+  },
+  (t) => [primaryKey({ columns: [t.itemId, t.colorId] }), index("item_colors_color_idx").on(t.colorId)],
+);
+
 /** Append-only record of who changed what. Metadata only, no personal data. */
 export const activityLog = pgTable(
   "activity_log",

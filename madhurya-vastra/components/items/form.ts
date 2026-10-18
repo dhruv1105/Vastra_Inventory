@@ -18,6 +18,7 @@ export const INITIAL_FORM: ItemFormData = {
   wearType: null,
   occasionIds: [],
   tagIds: [],
+  designColorIds: [],
   costPrice: "",
   sellingPrice: "",
   sizes: [],
@@ -77,7 +78,7 @@ export function sectionDone(form: ItemFormData): Record<SectionKey, boolean> {
   return {
     photos: form.images.length > 0,
     details: !!form.title.trim() && !!form.wearType,
-    classify: form.occasionIds.length + form.tagIds.length > 0,
+    classify: form.occasionIds.length + form.tagIds.length + form.designColorIds.length > 0,
     price: num(form.sellingPrice) > 0,
     variants: form.isOneOfAKind || (form.sizes.length > 0 && form.colorIds.length > 0),
   };
@@ -124,6 +125,7 @@ export function buildPayload(form: ItemFormData, status: "active" | "draft") {
     sellingPrice: num(form.sellingPrice),
     occasionIds: form.occasionIds,
     tagIds: form.tagIds,
+    designColorIds: form.designColorIds,
     variants: buildVariants(form),
     images: form.images.map((i, idx) => ({ base64: i.base64, mimeType: i.mimeType, displayOrder: idx, altText: i.altText })),
     status,

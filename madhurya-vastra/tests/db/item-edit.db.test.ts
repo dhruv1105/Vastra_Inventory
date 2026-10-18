@@ -56,6 +56,7 @@ describe.skipIf(!URL_)("item edit (Postgres)", () => {
       costPrice: it.costPrice,
       occasionIds: it.occasions.map((o) => o.id),
       tagIds: it.tags.map((t) => t.id),
+      designColorIds: it.designColors.map((c) => c.id),
       isOneOfAKind: it.isOneOfAKind,
       variants: it.variants.map((v) => ({ size: v.size, colorId: v.colorId, sellingPriceOverride: v.sellingPriceOverride, costPriceOverride: v.costPriceOverride ?? null })),
       images: { keep: it.images.map((p) => ({ id: p.id, displayOrder: p.displayOrder, altText: p.altText })), add: [] },
@@ -192,6 +193,16 @@ describe.skipIf(!URL_)("item edit (Postgres)", () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/no longer exists/);
     expect(fs.readdirSync(uploads(itemId)).length).toBe(before);
+  });
+
+  it("design colours: saved, returned with their codes, logged by name, removed", async () => {
+    const res = await send(patch, itemId, "PATCH", await form(itemId, { designColorIds: [red] }));
+    expect(res.status).toBe(200);
+    expect(res.body.data.designColors.map((c: { id: string }) => c.id)).toEqual([red]);
+    const entry = (await send(activity, itemId, "GET")).body.data[0];
+    expect(entry.payload).toEqual({ before: { designColors: [] }, after: { designColors: [`Edit red ${token}`] } });
+    expect((await send(patch, itemId, "PATCH", await form(itemId, { designColorIds: [] }))).status).toBe(200);
+    expect((await get(itemId))!.designColors).toEqual([]);
   });
 
   it("one of a kind off: the piece becomes One Size × colour, quantity kept, then sizes can be added", async () => {

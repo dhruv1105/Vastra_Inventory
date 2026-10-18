@@ -49,6 +49,24 @@ describe("POST /api/items", () => {
   });
 });
 
+describe("POST /api/items — design colours", () => {
+  beforeEach(() => reset(OWNER));
+  const RED = "c0000000-0000-4000-8000-000000000001";
+
+  it("stores each design colour once", async () => {
+    results.push({ match: "INSERT INTO items", rows: [{ id: ID, title: "x", status: "active" }] });
+    const res = await items.POST(req("POST", "/api/items", { body: body({ designColorIds: [RED, RED] }) }));
+    expect(res.status).toBe(201);
+    expect(sqlLike("INSERT INTO item_colors").map(([, p]) => p)).toEqual([[ID, RED, OWNER.id]]);
+  });
+
+  it("a design colour that isn't an id → 400", async () => {
+    const res = await items.POST(req("POST", "/api/items", { body: body({ designColorIds: ["red"] }) }));
+    expect(res.status).toBe(400);
+    expect(sqlLike("INSERT")).toHaveLength(0);
+  });
+});
+
 describe("POST /api/items — sizes", () => {
   beforeEach(() => reset(OWNER));
   const okInsert = () => results.push({ match: "INSERT INTO items", rows: [{ id: ID, title: "x", status: "active" }] });

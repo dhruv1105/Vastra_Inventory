@@ -141,7 +141,7 @@ export default function ItemForm({ mode }: Props) {
       <div className="mv-stagger grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <PhotosSection number={1} images={form.images} onChange={(images) => set("images", images)} />
         <DetailsSection number={2} form={form} set={set} errors={errors} itemTypes={lookups.itemTypes} loading={lookupsLoading} onAddType={addType} />
-        <ClassifySection number={3} form={form} set={set} occasions={lookups.occasions} tags={lookups.tags} loading={lookupsLoading} />
+        <ClassifySection number={3} form={form} set={set} occasions={lookups.occasions} tags={lookups.tags} colors={lookups.colors} loading={lookupsLoading} />
         <PriceSection number={4} form={form} set={set} errors={errors} showCost={user?.role === "owner"} />
         <div className="lg:col-span-2">
           <VariantsSection number={5} form={form} set={set} colors={lookups.colors} errors={errors} />

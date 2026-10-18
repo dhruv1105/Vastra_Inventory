@@ -204,6 +204,22 @@ describe("PATCH /api/items/[id] — saving", () => {
     expect(sqlLike("UPDATE variants SET color_id")[0][1]).toEqual(["v1", RED, 2199, 950, OWNER.id]);
   });
 
+  it("design colours are replaced by difference, like occasions", async () => {
+    stored();
+    results.push({ match: "FROM item_colors ic", rows: [{ id: RED, name: "Red" }] });
+    await patch(unchanged({ designColorIds: [BLUE] }));
+    expect(sqlLike("DELETE FROM item_colors")[0][1]).toEqual([ID, [RED]]);
+    expect(sqlLike("INSERT INTO item_colors")[0][1]).toEqual([ID, BLUE, OWNER.id]);
+  });
+
+  it("more than 10 design colours → 400, runs no SQL", async () => {
+    const many = Array.from({ length: 11 }, (_, i) => `c0000000-0000-4000-8000-0000000000${String(i + 10)}`);
+    const res = await patch(unchanged({ designColorIds: many }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/at most 10 colours/);
+    expect(calls).toHaveLength(0);
+  });
+
   it("occasions and tags are replaced by difference", async () => {
     stored();
     await patch(unchanged({ occasionIds: [O2] }));

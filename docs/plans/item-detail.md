@@ -241,3 +241,13 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   **Changed:** a network failure used to show the browser's raw "Failed to fetch"; a session that
   ended while the form was open now goes to sign-in (the typed form is lost — see Open).
   **Open:** keep Add Item's typed text across a sign-in (photos can't be kept the same way).
+- **Step 6b done (2026-10-18), from testing Add Item.** (1) Dropdowns opened behind the sticky save
+  bar: the page entrance animation kept its end state (fill mode "both"), making each section its own
+  stacking layer; now "backwards". (2) Sizes are tap-to-select chips in the usual order (XS → XXXL,
+  Free Size, then custom), colours are chosen in one searchable tick list (`ColorPicker`, applied on
+  Done); on laptops the choices sit left and the quantity grid right. The shared `Dialog` now scrolls
+  only its body, so its buttons stay in view. (3a) A colour can be a combination: optional second code
+  (migration 0006, `colors.hex_code_2`), half-and-half dot everywhere (`Swatch`), set or cleared on
+  Manage Lists. (3b) "Colours in the design" on items (migration 0007, `item_colors`; ≤ 10): describes
+  how every piece looks, separate from the stock colours; in Classify, POST/PATCH/GET, and the edit
+  history by name. Checked at the four sizes, light and dark.

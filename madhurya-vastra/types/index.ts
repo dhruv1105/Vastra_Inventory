@@ -41,6 +41,8 @@ export type ItemFormData = {
   wearType: WearType | null
   occasionIds: string[]
   tagIds: string[]
+  /** Colours in the design (how every piece looks); stock colours are colorIds. */
+  designColorIds: string[]
   costPrice: string
   sellingPrice: string
   sizes: string[]
@@ -78,6 +80,8 @@ export type Item = {
    */
   version: string
   occasions: LookupItem[]
+  /** Colours in the design (how every piece looks); stock is per variant colour. */
+  designColors: LookupItem[]
   tags: LookupItem[]
   variants: VariantDetail[]
   images: ImageDetail[]
