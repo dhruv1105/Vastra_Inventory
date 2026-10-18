@@ -22,7 +22,8 @@ tags), Inventory list (photo cards, title search, low-stock and status badges, l
 shell (header, collapsible sidebar, bottom nav), all on the redesigned UI kit.
 
 To build, in order (see [roadmap.md](roadmap.md)): item detail/edit → caption
-templates + sharing to WhatsApp/Instagram (mandatory in phase 1) → S3 photo storage + hosting →
+templates + sharing to WhatsApp/Instagram (mandatory in phase 1) → CI (GitHub Actions) → S3 photo
+storage + hosting →
 stock-movement ledger → mark as sold → dashboard + activity log.
 
 **Current step: item detail / edit.**
