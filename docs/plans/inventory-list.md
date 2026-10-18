@@ -270,14 +270,21 @@ or colours until the flag is turned off, as an explicit action in the edit UI.
 | 9 | Met | Bad cursor / long search → 400, no SQL (route tests) |
 | 10 | Met | Skeleton, empty, no results, error and failed Show more checked in the browser (empty/error/failure by stubbing the API) |
 | 11 | Met | Card → `/items/<id>` placeholder; Inventory highlighted (sidebar, bottom bar, phone title); Back keeps `?q=` |
-| 12 | Partly | No horizontal scroll at 4 sizes, light and dark. **Tap targets:** the grid/list switch (40 px) and clear-search (36 px) use the kit's IconButton sizes, below the 44 px rule — a kit-wide fix, proposed separately |
+| 12 | Met | No horizontal scroll at 4 sizes, light and dark. Tap targets: the switch, clear-search and header controls tap as 44 px (invisible touch area, visible size unchanged) |
 | 13 | Met | One query per page, ≤ 21 rows; indexes per EXPLAIN (without a search, Postgres chose a sequential scan at 3,000 items) |
 
-## Found, not fixed (outside this feature)
-- **Kit IconButton is 40 px (md) / 36 px (sm)**, below the 44 px tap-target rule, on every screen.
-- **Build warning (pre-existing since A2):** `middleware.ts` imports `better-auth/cookies`, which pulls
-  `jose`'s `CompressionStream` into the Edge bundle ("not supported in the Edge Runtime"). Appears on
-  a clean build only; the build succeeds.
+## Found during the feature
+- ~~Kit IconButton below 44 px~~ — fixed: invisible 44 px touch area (`components/ui/hitArea.ts`), no
+  layout change (commit "Kit: 44 px touch area…").
+- ~~Build warning from the Edge middleware~~ — fixed: `middleware.ts` reads `request.cookies` with
+  the names in `lib/auth/cookie.ts` and no longer imports better-auth (commit "Middleware: …").
+- **Open — stale cookie leaves a blank page (pre-existing since A2).** With a session cookie that
+  exists but is no longer valid (expired after 30 days, revoked by a password reset, or fake), the
+  protected layout sends the user to /login and the middleware sends anyone with a cookie away from
+  /login, so they land on a blank /inventory. No data is shown (every API call is 401). Same
+  behaviour before and after the middleware change. Proposed fix: the middleware only gates
+  protected pages; the "already signed in → leave /login" redirect moves to the login page's
+  server code, which checks the real session.
 - The `(created_at, id)` index was left out on purpose (owner, 2026-10-18).
 
 ## Running the Postgres test on the Docker stack

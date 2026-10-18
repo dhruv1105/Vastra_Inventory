@@ -14,7 +14,7 @@
     "db:studio": "drizzle-kit studio",
     "create-owner": "node scripts/create-owner.mjs",
     "test": "vitest run",
-    "test:db": "vitest run tests/db"
+    "test:db": "vitest run tests/db --no-file-parallelism"
   },
   "dependencies": {
     "better-auth": "1.7.7",

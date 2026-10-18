@@ -1,15 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+import { hasSessionCookie } from "@/lib/auth/cookie";
 
 // Page gate: no session cookie → /login (with the page to return to); signed in → skip /login.
 // This only checks that a cookie exists; the session itself is verified by every API route
 // (lib/auth/guard.ts) and by the client session fetch, so a stale cookie still ends at /login.
+// Runs on the Edge runtime: import nothing but next/server and lib/auth/cookie (no better-auth —
+// its cookie module pulls in JWT code the Edge runtime doesn't support).
 
 const PUBLIC = ["/login"];
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const hasSession = !!getSessionCookie(request, { cookiePrefix: "mv" });
+  const hasSession = hasSessionCookie(request.cookies);
   const isPublic = PUBLIC.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   if (!hasSession && !isPublic) {

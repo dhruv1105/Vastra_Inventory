@@ -9,6 +9,7 @@ import { normalizePhone } from "./staff.mjs";
 import { ac, owner, seller } from "./roles";
 import { smsEnabled } from "./sms";
 import { sendOtpToStaff } from "./otp";
+import { COOKIE_PREFIX } from "./cookie";
 
 // Server-side auth (better-auth). Plan and decisions: docs/plans/auth.md.
 // - No public sign-up: the owner adds staff (Staff screen) or scripts/create-owner.mjs.
@@ -43,7 +44,7 @@ export const auth = betterAuth({
     schema: { user: users, session: sessions, account: accounts, verification: verifications, rateLimit: rateLimits },
   }),
   advanced: {
-    cookiePrefix: "mv",
+    cookiePrefix: COOKIE_PREFIX, // shared with the Edge middleware (lib/auth/cookie.ts)
     database: { generateId: "uuid" },
   },
   emailAndPassword: {
