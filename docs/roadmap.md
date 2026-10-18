@@ -5,11 +5,11 @@ short and current.
 
 ## Phase 1 order (agreed with the owner, 2026-10-18)
 
-Done: UI redesign (R0–R6), real authentication (A1–A6).
+Done: UI redesign (R0–R6), real authentication (A1–A6), inventory list (step 1).
 
-1. **Inventory list** — `/inventory` shows items with cover photo, price, stock and status;
-   search and load-more. ← *current step*
-2. **Item detail / edit** — `/items/[id]`: view an item and change it.
+1. ~~**Inventory list**~~ — done 2026-10-18 ([plans/inventory-list.md](plans/inventory-list.md)).
+2. **Item detail / edit** — `/items/[id]`: view an item and change it. ← *current step*
+   (`/items/[id]` is a placeholder today; cards on /inventory already link to it.)
    Rule: a one-of-a-kind item (`items.is_one_of_a_kind`) can't gain sizes or colours until the
    flag is turned off, and turning it off is an explicit action in the edit UI (never a side
    effect of adding a size or colour). The server enforces it too.

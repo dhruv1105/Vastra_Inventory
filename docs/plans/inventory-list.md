@@ -1,6 +1,6 @@
 # Inventory list: brief and plan
 
-Status: **Approved 2026-10-18 with changes** (below) · building step 1 · · Branch: `feat/inventory-list` (from `main`)
+Status: **Done (steps 1–5)** · 2026-10-18 · Branch: `feat/inventory-list` (from `main`)
 
 ## Brief
 
@@ -249,3 +249,42 @@ or colours until the flag is turned off, as an explicit action in the edit UI.
   "Item details are on the way"; unknown or malformed ids → "This item isn't here"; load error →
   Try again. `components/layout/nav.ts` maps `/items/<id>` (not `/items/new`) to Inventory, so it
   stays highlighted (4 unit tests in `tests/lib/nav.test.ts`). Browser-checked at 390 and 1366.
+- **Step 5 done (2026-10-18).** Regression: 7 screens (Inventory, item page, Add Item, Manage Lists,
+  Staff, Sales, Dashboard) × 4 sizes × light/dark = 56 checks, no horizontal scroll, no console
+  errors. Inventory behaviour re-run at all 4 sizes. 102 tests + 2 Postgres tests pass; lint clean;
+  production build passes. Docs: CLAUDE.md layout/commands/tests, brief and roadmap moved to item
+  detail / edit.
+
+## Acceptance criteria — result
+
+| # | Result | Evidence |
+|---|---|---|
+| 1 | Met | Signed out: `/inventory` and `/items/<id>` → 307 to `/login?next=…`; `GET /api/items` → 401 (route test: no SQL) |
+| 2 | Met | Owner and a new seller see the same 20 items; neither response contains a cost field; SQL never mentions `cost_price` (route test) |
+| 3 | Met | Seed's archived and deleted items never shown; status filter and order asserted in route tests |
+| 4, 4a, 4b | Met | On-screen counts match the seed: from ₹ 4, No stock added 2, One of a kind 4, Draft 3, Sold out 2 (dimmed), No type 1 (not on phone grid cards, by design) |
+| 5 | Met | Low stock 4 (2, 1, 0 left); none on drafts, sold out, one-of-a-kind, no variants (unit tests + screen) |
+| 6 | Met | "lav geo" → Lavender Georgette Saree only; symbols harmless; EXPLAIN uses the GIN index |
+| 7 | Met | Requests aborted on a new search; Clear restores 20 items |
+| 8 | Met | 20 → 28, no duplicates; 25-in-one-transaction Postgres test passes and fails with a `created_at`-only cursor |
+| 9 | Met | Bad cursor / long search → 400, no SQL (route tests) |
+| 10 | Met | Skeleton, empty, no results, error and failed Show more checked in the browser (empty/error/failure by stubbing the API) |
+| 11 | Met | Card → `/items/<id>` placeholder; Inventory highlighted (sidebar, bottom bar, phone title); Back keeps `?q=` |
+| 12 | Partly | No horizontal scroll at 4 sizes, light and dark. **Tap targets:** the grid/list switch (40 px) and clear-search (36 px) use the kit's IconButton sizes, below the 44 px rule — a kit-wide fix, proposed separately |
+| 13 | Met | One query per page, ≤ 21 rows; indexes per EXPLAIN (without a search, Postgres chose a sequential scan at 3,000 items) |
+
+## Found, not fixed (outside this feature)
+- **Kit IconButton is 40 px (md) / 36 px (sm)**, below the 44 px tap-target rule, on every screen.
+- **Build warning (pre-existing since A2):** `middleware.ts` imports `better-auth/cookies`, which pulls
+  `jose`'s `CompressionStream` into the Edge bundle ("not supported in the Edge Runtime"). Appears on
+  a clean build only; the build succeeds.
+- The `(created_at, id)` index was left out on purpose (owner, 2026-10-18).
+
+## Running the Postgres test on the Docker stack
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec db \
+  sh -c 'createdb -U "$POSTGRES_USER" vastra_test'          # once
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app \
+  sh -c 'TEST_DATABASE_URL="${DATABASE_URL%/*}/vastra_test" npm run test:db'
+```
+The test applies migrations itself and deletes its own rows.

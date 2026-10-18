@@ -18,13 +18,14 @@ Built: real sign-in (better-auth — phone/email + password, optional Google and
 codes; the owner adds staff on the Staff screen; owner/seller roles checked on the server — see
 [plans/auth.md](plans/auth.md)), Add Item (photos, details, classification, pricing with margin,
 size × colour grid with price overrides, draft/active), Manage Lists (types, colours, occasions,
-tags), responsive shell (header, collapsible sidebar, bottom nav), all on the redesigned UI kit.
+tags), Inventory list (photo cards, title search, low-stock and status badges, load more), responsive
+shell (header, collapsible sidebar, bottom nav), all on the redesigned UI kit.
 
-To build, in order (see [roadmap.md](roadmap.md)): inventory list → item detail/edit → caption
+To build, in order (see [roadmap.md](roadmap.md)): item detail/edit → caption
 templates + sharing to WhatsApp/Instagram (mandatory in phase 1) → S3 photo storage + hosting →
 stock-movement ledger → mark as sold → dashboard + activity log.
 
-**Current step: inventory list.**
+**Current step: item detail / edit.**
 
 ## Phase 2 — customers
 
