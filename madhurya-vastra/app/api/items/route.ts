@@ -6,6 +6,7 @@ import { pool } from "@/lib/db";
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALT_TEXT_MAX = 120;
 const MIME_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -108,6 +109,9 @@ export async function POST(request: Request) {
     if (typeof img.base64 !== "string") {
       return NextResponse.json({ error: "Invalid image data" }, { status: 400 });
     }
+    if (img.altText != null && (typeof img.altText !== "string" || img.altText.length > ALT_TEXT_MAX)) {
+      return NextResponse.json({ error: `Photo descriptions must be ${ALT_TEXT_MAX} characters or less` }, { status: 400 });
+    }
     const raw = img.base64.replace(/^data:[^;]+;base64,/, "");
     const buffer = Buffer.from(raw, "base64");
     if (buffer.length === 0) {
@@ -120,7 +124,7 @@ export async function POST(request: Request) {
       buffer,
       mimeType,
       displayOrder: isNum(img.displayOrder) ? img.displayOrder : i,
-      altText: img.altText ?? null,
+      altText: img.altText ? img.altText.trim() || null : null,
     });
   }
 
