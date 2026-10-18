@@ -10,6 +10,8 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Self-contained server bundle for the Docker image (madhurya-vastra/Dockerfile).
+  output: "standalone",
 };
 
 export default withPWA(nextConfig);
