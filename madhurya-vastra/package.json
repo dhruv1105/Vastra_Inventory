@@ -9,14 +9,15 @@
     "lint": "next lint",
     "db:migrate": "node scripts/db.mjs migrate",
     "db:seed": "node scripts/db.mjs seed",
-    "db:seed:dev": "node scripts/db.mjs seed --dev",
     "db:status": "node scripts/db.mjs status",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "create-owner": "node scripts/create-owner.mjs"
   },
   "dependencies": {
     "amazon-cognito-identity-js": "^6.3.16",
-    "drizzle-orm": "0.36.4",
+    "better-auth": "1.7.7",
+    "drizzle-orm": "0.45.3",
     "gsap": "3.12.5",
     "lucide-react": "^1.16.0",
     "next": "14.2.35",
@@ -30,7 +31,7 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "drizzle-kit": "0.28.1",
+    "drizzle-kit": "0.31.11",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8",

@@ -54,7 +54,7 @@ Every table carries `created_by`, `created_at`, `updated_by`, `updated_at`; look
 | Stock | `variants.quantity` overwritten | `stock_movements` ledger (purchase, sale, return, adjustment, reservation); quantity derived |
 | Money | `numeric(12,2)` rupees (decided); routes read `::float8` | One formatting helper; never float arithmetic for totals |
 | Images | Local `public/uploads`, base64 in JSON | Object storage behind one storage helper; multipart upload |
-| Users | Every new user `owner` | New users get no access until the owner assigns a role; customers a separate role |
+| Users | better-auth user table (`users`), owner adds staff, roles owner / seller (docs/plans/auth.md) | Customers as a separate role in phase 2 |
 | SKU / barcode | none | Per-variant SKU + barcode for billing |
 
 ## 4. Seed lists (`db/seeds/010_lookups.sql`)

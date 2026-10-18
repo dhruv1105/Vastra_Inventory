@@ -12,6 +12,8 @@ const nextConfig = {
   reactStrictMode: true,
   // Self-contained server bundle for the Docker image (madhurya-vastra/Dockerfile).
   output: "standalone",
+  // instrumentation.ts: fail fast at startup when required settings are missing.
+  experimental: { instrumentationHook: true },
 };
 
 export default withPWA(nextConfig);

@@ -13,8 +13,9 @@ Needs Docker. Nothing else has to be installed on your machine.
 ./scripts/dev-up.sh        # first run creates .env from .env.example, builds, migrates, seeds
 ```
 
-Open http://localhost:3000 and use **Dev Bypass Login** (development only). Code changes reload
-live. Lists (types, colours, occasions, tags) and a test owner are seeded.
+Open http://localhost:3000 and sign in with phone **98765 43210** (or **owner@example.com**) and
+password **madhurya-dev** — a development-only owner created on every start. Code changes reload
+live. Lists (types, colours, occasions, tags) are seeded.
 
 | Command | What it does |
 |---|---|
@@ -24,6 +25,7 @@ live. Lists (types, colours, occasions, tags) and a test owner are seeded.
 | `./scripts/db.sh migrate \| seed \| status \| shell` | Database tasks; `shell` opens psql |
 | `./scripts/logs.sh [app\|db]` | Follow logs |
 | `./scripts/check.sh [build]` | Type check + lint (+ production build) in the container |
+| `./scripts/create-owner.sh --name "…" --phone …` | Create an owner (prints a temporary password) or `--reset-password` |
 
 Ports: app `3000`, Postgres `127.0.0.1:5440` (change `APP_PORT` / `DB_PORT` in `.env`).
 
@@ -53,7 +55,9 @@ Starter data lives in `db/seeds/*.sql` (safe to re-run); `db/seeds/dev/` is deve
 ## Production image
 
 `docker compose up -d --build` (without the dev file) builds a small standalone image that
-applies pending migrations, then starts. Seeds never run automatically. Item photos are on a
+applies pending migrations, then starts. It refuses to start without `BETTER_AUTH_SECRET`
+(`openssl rand -base64 32`) and `BETTER_AUTH_URL` in `.env`. Create the first owner with
+`docker compose exec app node scripts/create-owner.mjs --name "…" --phone …`. Seeds never run automatically. Item photos are on a
 Docker volume for now; object storage (S3) comes before hosting — see `docs/roadmap.md`.
 
 ## Where things are

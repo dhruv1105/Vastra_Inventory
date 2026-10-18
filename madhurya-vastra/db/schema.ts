@@ -8,26 +8,90 @@
 // money as numeric(12,2) rupees (exact).
 
 import { sql } from "drizzle-orm";
-import { check, char, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { boolean, check, char, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { withTimezone: true });
 const money = (name: string) => numeric(name, { precision: 12, scale: 2 });
 const liveOnly = sql`deleted_at IS NULL`;
 
+// ── Auth (better-auth, lib/auth/server.ts) ──────────────────────────────────────────────────────
+// Property names below are the ones better-auth expects (name, email, image, phoneNumber, role,
+// banned …); the database column names stay snake_case. Staff added without an email get a
+// placeholder address on the reserved .invalid domain (lib/auth/staff.ts) because better-auth
+// requires one; it is never shown.
+
 export const users = pgTable(
   "users",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    cognitoSub: text("cognito_sub").notNull().unique(),
     name: text("name").notNull().default(""),
-    email: text("email"),
-    phone: text("phone"),
-    avatarUrl: text("avatar_url"),
+    email: text("email").notNull().unique(),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    image: text("avatar_url"),
+    phoneNumber: text("phone").unique(),
+    phoneNumberVerified: boolean("phone_verified").notNull().default(false),
     role: text("role", { enum: ["owner", "seller"] }).notNull().default("seller"),
+    /** Disabled account (better-auth admin "ban"). Sessions are revoked when set. */
+    banned: boolean("disabled").notNull().default(false),
+    banReason: text("disabled_reason"),
+    banExpires: ts("disabled_until"),
+    /** Set when the owner gives a temporary password; the next sign-in asks for a new one. */
+    mustChangePassword: boolean("must_change_password").notNull().default(false),
     createdAt: ts("created_at").notNull().defaultNow(),
     updatedAt: ts("updated_at").notNull().defaultNow(),
   },
   (t) => [check("users_role_check", sql`${t.role} IN ('owner', 'seller')`)],
+);
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    expiresAt: ts("expires_at").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    impersonatedBy: uuid("impersonated_by"),
+    createdAt: ts("created_at").notNull().defaultNow(),
+    updatedAt: ts("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/** Sign-in methods per user: "credential" (password hash) and later "google". */
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    password: text("password"),
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: ts("access_token_expires_at"),
+    refreshTokenExpiresAt: ts("refresh_token_expires_at"),
+    scope: text("scope"),
+    createdAt: ts("created_at").notNull().defaultNow(),
+    updatedAt: ts("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("accounts_user_idx").on(t.userId)],
+);
+
+/** One-time values: phone OTP codes, password-reset tokens. */
+export const verifications = pgTable(
+  "verifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    identifier: text("identifier").notNull(),
+    value: text("value").notNull(),
+    expiresAt: ts("expires_at").notNull(),
+    createdAt: ts("created_at").notNull().defaultNow(),
+    updatedAt: ts("updated_at").notNull().defaultNow(),
+  },
+  (t) => [index("verifications_identifier_idx").on(t.identifier)],
 );
 
 const audit = () => ({

@@ -9,5 +9,7 @@ if [ "$(cat node_modules/.lock-hash 2>/dev/null)" != "$hash" ]; then
   echo "$hash" > node_modules/.lock-hash
 fi
 npm run db:migrate
-npm run db:seed:dev
+npm run db:seed
+# Test owner for the login screen (phone +919876543210 / owner@example.com, password madhurya-dev).
+node scripts/create-owner.mjs --dev
 exec npm run dev -- -H 0.0.0.0

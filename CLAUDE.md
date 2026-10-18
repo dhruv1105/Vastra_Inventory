@@ -29,7 +29,7 @@ Full brief: [docs/brief.md](docs/brief.md).
 | Database | PostgreSQL 16 in Docker; schema + migrations with **Drizzle** (`db/schema.ts`); existing routes use raw parameterised SQL via `query()`, new code may use the typed `db` client (`lib/db.ts`) |
 | Dev stack | Docker Compose (`docker-compose.yml` + `docker-compose.dev.yml`), helper scripts in `scripts/` |
 | PWA | `next-pwa` (disabled in development) |
-| Auth | Placeholder — dev bypass login only; Cognito code is a stub, to be replaced |
+| Auth | better-auth (`lib/auth/server.ts`): sessions in Postgres, phone/email + password, roles owner/seller; owner adds staff (no public sign-up). Being rolled out in phases A1–A6 |
 
 Installed on purpose: GSAP (intro only, loaded lazily), Drizzle ORM + drizzle-kit.
 Planned, not installed yet — never import them until added on purpose: zod, Vitest,
@@ -85,8 +85,9 @@ npm run build          # production build — run before calling a phase done
 npm run db:generate -- --name <change>   # after editing db/schema.ts; review the SQL
 ```
 
-Dev login: "Dev Bypass Login" on /login (the seeded owner). Login is held in memory only — a
-full page reload signs out until real auth lands; navigate inside the app when testing.
+Dev sign-in (created on every dev start): phone **+91 98765 43210** or **owner@example.com**,
+password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh --name "…" --phone …`
+(prints a one-time temporary password). Auth plan and progress: [docs/plans/auth.md](docs/plans/auth.md).
 
 ## Top rules (full list: [.claude/rules.md](.claude/rules.md))
 

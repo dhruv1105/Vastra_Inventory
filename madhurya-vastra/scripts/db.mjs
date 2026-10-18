@@ -2,7 +2,7 @@
 // Database tool (runs on the host, in the dev container and in the production image):
 //
 //   node scripts/db.mjs migrate        apply pending Drizzle migrations from db/migrations
-//   node scripts/db.mjs seed           apply db/seeds/*.sql (+ db/seeds/dev/*.sql with --dev)
+//   node scripts/db.mjs seed           apply db/seeds/*.sql (+ db/seeds/dev/*.sql with --dev, if any)
 //   node scripts/db.mjs status         list applied / pending migrations
 //
 // Migrations are generated from db/schema.ts with `npm run db:generate`. Seeds are plain SQL
