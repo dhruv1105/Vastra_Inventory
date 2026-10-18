@@ -77,3 +77,27 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Login: the real logo blooms in (scale + soft blur), then the sign-in card rises. ~1s. */
+@keyframes mv-bloom {
+  0% {
+    transform: scale(0.86);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+    filter: none;
+  }
+}
+.mv-bloom {
+  animation: mv-bloom 0.9s var(--mv-ease) both;
+}
+.mv-rise-late {
+  animation: rise 0.6s var(--mv-ease) 0.55s both;
+}

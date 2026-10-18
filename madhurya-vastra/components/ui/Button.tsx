@@ -1,8 +1,9 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import Link, { type LinkProps } from "next/link";
 import { cn } from "@/lib/cn";
 import Loader from "./Loader";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "danger-ghost";
+export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger" | "danger-ghost";
 export type ButtonSize = "sm" | "md";
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -25,6 +26,8 @@ const base =
 const variants: Record<ButtonVariant, string> = {
   primary: "bg-primary text-primary-on shadow-md shadow-primary/25 hover:bg-primary-hover",
   secondary: "border border-primary-soft bg-surface text-primary hover:bg-tint",
+  /** Neutral bordered button for third-party or utility actions (Continue with Google). */
+  outline: "border border-line bg-surface text-fg hover:bg-tint",
   ghost: "text-primary hover:bg-tint",
   danger: "bg-danger text-surface hover:bg-danger/90",
   /** Secondary destructive action next to others (e.g. Remove photo). */
@@ -58,3 +61,20 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
 });
 
 export default Button;
+
+/** Navigation that looks like a Button (e.g. "Add first item" on an empty screen). */
+export function LinkButton({
+  variant = "primary",
+  size = "md",
+  icon,
+  className,
+  children,
+  ...rest
+}: LinkProps & { variant?: ButtonVariant; size?: ButtonSize; icon?: ReactNode; className?: string; children: ReactNode }) {
+  return (
+    <Link className={cn(base, variants[variant], sizes[size], className)} {...rest}>
+      {icon}
+      {children}
+    </Link>
+  );
+}

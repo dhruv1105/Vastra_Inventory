@@ -36,7 +36,7 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 - [x] R4.3 Variant grid: blank cells, fill row/column/all
 - [x] R4.4 Images: preview, alt text
 - [x] R4.5 Error summary, Draft explained, ConfirmDialog
-- [ ] R5 Login restyle + shared EmptyState on placeholders
+- [x] R5 Login restyle + shared EmptyState on placeholders
 - [ ] R6 Regression screenshots + new screens.pdf
 
 ## Log
@@ -94,3 +94,11 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
   1366 on the Docker DB: errors → summary → fix → sizes/colours → fill → photo + alt → saved;
   rows match in Postgres (variants 3/3/3/5, alt "Front drape"). Not tested: Collapsible
   sections were not needed once the jump bar existed (not built).
+- 2026-10-18 R5: Login on the kit — real logo on the lavender backdrop (light in both themes),
+  logo blooms in and the card rises (CSS, reduced-motion aware), side by side on laptops and
+  short landscape phones; Google / phone OTP stay visual only but now say so in a toast instead
+  of console.log / window.alert; dev bypass boxed as "Development only". Inventory, Sales and
+  Dashboard use PageHeader + EmptyState; Inventory's floating "+" is gone (Add Item is in the
+  nav) and the empty state links to Add Item. Kit: LinkButton, Button "outline". No old
+  palette/arbitrary classes remain in app/ or components/. Browser-checked at all 4 sizes.
+  Also: server-side alt-text check on POST /api/items (security review of R4).
