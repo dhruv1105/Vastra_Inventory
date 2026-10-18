@@ -46,6 +46,7 @@ generated from a typed `ThemeConfig` in `madhurya-vastra/lib/theme/` — see
 live preview and contrast checks, and a schedule table for festival themes.
 
 ## Others already noted
+- Inventory search by colour and item type (follow-up to step 1, which searches titles only).
 - ~~Real authentication~~ — done 2026-10-18 (better-auth, docs/plans/auth.md).
 - SKU / barcode per variant (after the stock ledger).
 - Hosting (step 4): AWS (App Runner/ECS + RDS + S3, using the Docker image) or Vercel

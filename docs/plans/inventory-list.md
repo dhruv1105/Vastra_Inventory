@@ -1,12 +1,12 @@
 # Inventory list: brief and plan
 
-Status: **Awaiting approval** · 2026-10-18 · Branch: `feat/inventory-list` (from `main`)
+Status: **Approved 2026-10-18 with changes** (below) · building step 1 · · Branch: `feat/inventory-list` (from `main`)
 
 ## Brief
 
 - **Who:**
-  - **Sellers** use it many times a day, on a phone in the shop. A customer asks "do you have the
-    maroon Banarasi?" and the seller needs to find it fast.
+  - **Sellers** use it many times a day, on a phone in the shop. A customer points at a photo of
+    the "Lavender Georgette Saree" and the seller types "lav geo" to find it fast.
   - **The owner** uses it daily, on a phone or laptop, to see what is in stock and what is still
     a draft.
 - **Problem:** items can be added, but there is nowhere to see them. `/inventory` is a placeholder,
@@ -15,14 +15,15 @@ Status: **Awaiting approval** · 2026-10-18 · Branch: `feat/inventory-list` (fr
   - A seller types three letters of a title and sees the item on screen within about a second.
   - "Do we have this?" (brief: under 10 seconds) is answerable from this screen plus the item page.
   - Low-stock items are visible without opening each one.
+- **Search is title-only in this feature.** Search by colour and type is a follow-up (roadmap).
 
 ## Scope
 
 - **In scope:**
-  - `/inventory` shows active and draft items, newest first. Archived items are hidden.
+  - `/inventory` shows active, draft and sold-out items, newest first. Archived items are hidden.
   - Title search runs on the server as you type, debounced and backed by the GIN index.
-  - Each card shows the cover photo, title, item type, selling price, total stock and a status
-    badge.
+  - Each card shows the cover photo, title, item type, price ("from ₹X" when a variant is
+    cheaper), total stock, and a badge for Draft or Sold out only.
   - A "Low stock" marker appears when total stock is 2 or less. The threshold is one constant.
   - Tapping a card opens `/items/[id]`, which is a placeholder for now.
   - "Show more" loads the next 20 items, using a cursor.
@@ -39,12 +40,14 @@ Status: **Awaiting approval** · 2026-10-18 · Branch: `feat/inventory-list` (fr
 |---|---|
 | 1 | Signed out: `/inventory` redirects to /login, and `GET /api/items` returns 401 without running any SQL |
 | 2 | Owner and seller both see the same list. The list API never selects or returns `cost_price` |
-| 3 | Shows `active` and `draft` items (plus `sold_out` — see question 1), never `archived` or deleted. Newest first, with ties broken by id |
-| 4 | Card: cover is the lowest `display_order` live image, with the mark as a fallback when there is no photo. Shows title, type name (or "No type"), price as `₹1,999`, "N in stock", and a badge labelled Active / Draft (never `draft`) |
-| 5 | "Low stock" (zari/gold, meaning needs attention) appears when total stock ≤ `LOW_STOCK_AT` (2), for live items only (see question 2) |
+| 3 | Shows `active`, `draft` and `sold_out` items, never `archived` or deleted. `ORDER BY created_at DESC, id DESC` |
+| 4 | Card: cover is the lowest `display_order` live image, with the mark as a fallback when there is no photo. Shows title, type name (or "No type"), price as `₹1,999`, and stock as "N in stock" (or "No stock added" when the item has no variants) |
+| 4a | Price: "from ₹X" when any live variant has a selling-price override lower than the item's price; otherwise the item's selling price. Computed in the same query (`MIN(selling_price_override)` over live variants, compared in SQL as `numeric`) |
+| 4b | Badges: "Draft" and "Sold out" only, with no badge for active items. Sold-out cards are slightly dimmed |
+| 5 | "Low stock" (zari/gold, meaning needs attention) appears when total stock ≤ `LOW_STOCK_AT` (2). It is never shown for drafts, sold-out items, one-of-a-kind items, or items with no variants |
 | 6 | Search: 300 ms after typing stops, the title is searched by word prefix. "lav geo" matches "Lavender Georgette Saree". The query uses the index expression exactly. Symbols such as `( ) & ! : *` cannot cause an error |
 | 7 | An older search response never overwrites a newer one (stale requests are aborted). Clearing the box shows the full list again |
-| 8 | "Show more" appends the next 20 with no duplicates or gaps, even if someone adds an item while you scroll (keyset cursor on `created_at, id`). The button disappears on the last page |
+| 8 | "Show more" appends the next 20 with no duplicates or gaps, even if someone adds an item while you scroll, and even when many items share one `created_at` (`NOW()` is the transaction start time, so items saved in one transaction share it). Composite cursor `(created_at, id)` with a row comparison `(i.created_at, i.id) < ($c, $id)`. Proven by a database test that inserts 25 items in one transaction and pages through all 25. The button disappears on the last page |
 | 9 | Invalid input: a bad cursor or a query over 100 characters returns 400 with a plain sentence, and no SQL runs |
 | 10 | States: a skeleton on first load and on a new search; "Your shelves are empty" with Add Item when nothing exists; "No items match …" with Clear search; a network or server error shows a plain sentence with Try again; a failed "Show more" keeps the items already shown |
 | 11 | Tapping a card opens `/items/[id]`, a placeholder with a way back. Inventory stays highlighted in the nav. The search survives Back (kept in `?q=`) |
@@ -60,12 +63,15 @@ Status: **Awaiting approval** · 2026-10-18 · Branch: `feat/inventory-list` (fr
   - Query params: `q` (optional, trimmed, ≤ 100 characters) and `cursor` (optional, opaque).
 - **Response:**
   - `{ data: { items: InventoryItem[], nextCursor: string | null } }`.
-  - `InventoryItem`: `id`, `title`, `status`, `itemTypeName`, `sellingPrice`, `coverUrl`,
-    `coverAlt`, `totalStock`, `variantCount`. There is no cost field.
+  - `InventoryItem`: `id`, `title`, `status`, `itemTypeName`, `sellingPrice`, `fromPrice`
+    (lower variant price or null), `coverUrl`, `coverAlt`, `totalStock`, `variantCount`,
+    `isOneOfAKind`. There is no cost field.
 - **One query per page:**
   - `items` LEFT JOIN `item_types`.
   - A LATERAL join for the cover image: live rows, `ORDER BY display_order LIMIT 1`.
-  - A LATERAL join for `SUM(quantity)` and `COUNT(*)` over live variants.
+  - A LATERAL join over live variants: `SUM(quantity)`, `COUNT(*)` and
+    `MIN(selling_price_override)`. `fromPrice` is that minimum only when it is below
+    `selling_price`.
   - `WHERE i.deleted_at IS NULL AND i.status IN (…)`, the optional search clause and the
     optional cursor clause. `ORDER BY i.created_at DESC, i.id DESC LIMIT 21`. The 21st row only
     signals that there is a next page.
@@ -74,10 +80,14 @@ Status: **Awaiting approval** · 2026-10-18 · Branch: `feat/inventory-list` (fr
   - Each word becomes `word:*`, joined with `&`, and is passed as a parameter to
     `to_tsquery('simple', $n)` against `to_tsvector('simple', i.title)`.
   - If nothing is left after cleaning, the request is treated as having no search.
-- **Cursor:**
+- **Cursor (composite):**
+  - `ORDER BY i.created_at DESC, i.id DESC`, and the next page is
+    `(i.created_at, i.id) < ($c::timestamptz, $id::uuid)`, a row comparison. A
+    `created_at`-only cursor would skip or repeat items saved in the same transaction, because
+    they share `NOW()`.
   - The cursor is base64url of `created_at` read as text in SQL (keeping microseconds — a JS
-    `Date` would lose them and skip rows) plus the id.
-  - It is decoded and validated (timestamp format and UUID) before any SQL runs.
+    `Date` would lose them) plus the id. It is decoded and validated (timestamp format and UUID)
+    before any SQL runs.
 - **Shared code:** a new `lib/inventory.ts` holds `LOW_STOCK_AT = 2`, `PAGE_SIZE = 20`,
   `isLowStock()`, `toPrefixQuery()`, `encodeCursor()`/`decodeCursor()` and `STATUS_LABEL`.
 
@@ -118,8 +128,13 @@ once if it hasn't run since then.
        stripped; empty after cleaning means no search.
      - `q` over 100 characters and a bad cursor → 400 with no SQL.
      - 21 rows → 20 rows plus a `nextCursor`; 20 rows → `null`; a cursor round trip sends both
-       params.
-   - Unit tests for `isLowStock()` and the cursor functions.
+       params; the SQL uses the row comparison and the `created_at DESC, id DESC` order.
+   - Unit tests for `isLowStock()`, `toPrefixQuery()` and the cursor functions.
+   - **Database test** `tests/db/items-list.db.test.ts` against real Postgres: it inserts 25
+     items in one transaction (one shared `created_at`) and pages 20 + 5 through `GET /api/items`,
+     expecting all 25 with no repeats. It runs when `TEST_DATABASE_URL` is set
+     (`npm run test:db`), applies the migrations itself and deletes its own rows; plain `npm test`
+     skips it.
 2. **Kit:** `Badge`, plus its `/kit` preview.
 3. **Inventory screen:** search, list/grid, Show more, and all the states. Replaces the placeholder.
 4. **`/items/[id]`:** the placeholder page and the nav highlight.
@@ -140,7 +155,31 @@ Docker isn't available in the cloud session. I'll verify on a throwaway Postgres
 repo's migrations and seeds, plus `next dev` with the dev owner and a seller created through
 `/staff`.
 
-## Questions for approval
+## Answers (owner, 2026-10-18)
+
+1. Sold-out items show, with a "Sold out" badge and a slightly dimmed card.
+2. No low-stock marker on one-of-a-kind items or drafts. Detection: see "One-of-a-kind" below.
+3. Items with no variants show "No stock added" and no low-stock marker.
+4. "from ₹X" when any live variant has a lower override; otherwise the item price. Same query.
+5. Badges: Draft and Sold out only. No Active badge.
+
+## One-of-a-kind (pending owner decision)
+
+Today Add Item saves a one-of-a-kind piece as exactly one variant with size "One Size", no colour
+and quantity 1 (`components/items/form.ts`). Nothing else marks it. So detection relies on those
+values (one live variant AND `size = 'One Size'` AND `color_id IS NULL`). It would break if
+someone typed "One Size" as a custom size, or once item editing can change the variant.
+
+Proposed migration (not done until approved):
+- `items.is_one_of_a_kind boolean NOT NULL DEFAULT false` (Drizzle schema + generated migration).
+- Backfill: `true` where the item has exactly that one-variant shape.
+- Add Item's POST sends `isOneOfAKind`; the route stores it, ignoring the old shape.
+- The list reads the column. Route tests cover the POST field.
+
+Until it is decided, `GET /api/items` returns `isOneOfAKind` from the value rule, in one SQL
+expression, so switching to the column changes one line.
+
+## Original questions
 
 1. **`sold_out` items:** you said "active + draft; hide archived". Nothing sets `sold_out` today,
    but once mark-as-sold exists those items exist too. Should they show (badge "Sold out"), or
