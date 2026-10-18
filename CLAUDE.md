@@ -120,7 +120,8 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before mark as sold.
-- **Tests cover API routes, helpers and paging** (102 Vitest tests + 2 Postgres tests); no UI tests yet.
+- **Tests cover API routes, helpers, middleware, paging and session checks** (111 Vitest tests + 8
+  Postgres tests via `npm run test:db`); no UI tests yet.
 
 ## Vocabulary
 
