@@ -46,6 +46,8 @@ const config: Config = {
       },
       // Stacking layers, lowest to highest. Use these names, never numbers.
       zIndex: { nav: "40", menu: "50", toast: "60", dialog: "70" },
+      // Clothing photos are portrait: inventory cards crop covers to 4:5.
+      aspectRatio: { portrait: "4 / 5" },
       transitionTimingFunction: {
         brand: "var(--mv-ease)",
       },

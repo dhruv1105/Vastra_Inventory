@@ -222,3 +222,18 @@ or colours until the flag is turned off, as an explicit action in the edit UI.
   tones neutral / primary / zari (needs attention) / success / danger and an optional icon. Text
   is always present, so state never depends on colour alone. Added to `/kit` ("Badges"). Checked at
   390 px in light and dark.
+- **Dev seed (2026-10-18).** `db/seeds/dev/020_inventory_samples.sql` (run with `./scripts/db.sh seed`):
+  30 items, 28 visible. Each state appears at least once (counts on screen: Low stock 4, Draft 3,
+  Sold out 2, No stock added 2, One of a kind 4, "from ₹" 4, No type 1); archived and deleted
+  items are hidden. Placeholder covers in `public/dev-samples/`.
+- **Step 3 done (2026-10-18).** `/inventory`: `components/inventory/InventoryCard.tsx` (row on
+  phones, portrait card from `md`), `InventorySkeleton.tsx`, page with a 300 ms debounced search kept
+  in `?q=`, stale requests aborted, Show more (a failure keeps the shown items and offers Try again),
+  and loading / empty / no-results / error states. Grid 3 → 4 → 5 columns (md / lg / xl). New theme
+  token `aspect-portrait` (4:5). Sold-out cards are dimmed and drop the stock text (the badge says
+  it). Checked in Chromium on Postgres 16 with the dev seed, at 390×844, 844×390, 768×1024 and
+  1366×768 (light; dark at phone and laptop): 20 → 28 after Show more, no duplicates, archived and
+  deleted never shown, no horizontal scroll, "lav geo" → Lavender Georgette Saree only, symbols
+  harmless, Back restores the search, owner and a new seller see the same list and no cost field.
+  Empty, error, loading and failed Show more were produced by stubbing the API in the browser.
+  Known until step 4: card links go to `/items/<id>`, which is still a 404.
