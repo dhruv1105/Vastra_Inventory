@@ -158,6 +158,10 @@ export const items = pgTable(
     index("items_live_created_idx").on(t.createdAt.desc()).where(liveOnly),
     index("items_live_status_idx").on(t.status).where(liveOnly),
     index("items_item_type_idx").on(t.itemTypeId),
+    // Title search on the inventory list. 'simple' (no stemming, no stop words) keeps shop words
+    // like "Banarasi" or "Chanderi" intact and allows prefix matching (`to_tsquery('simple', 'lav:*')`).
+    // Queries must use the same expression and `deleted_at IS NULL` for Postgres to use it.
+    index("items_live_title_search_idx").using("gin", sql`to_tsvector('simple', ${t.title})`).where(liveOnly),
   ],
 );
 
