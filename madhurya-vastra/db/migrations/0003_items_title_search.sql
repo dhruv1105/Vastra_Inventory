@@ -1,0 +1,1 @@
+CREATE INDEX "items_live_title_search_idx" ON "items" USING gin (to_tsvector('simple', "title")) WHERE deleted_at IS NULL;
