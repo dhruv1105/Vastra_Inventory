@@ -215,3 +215,18 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   "This page is out of date". 25 route tests + a Postgres flow test (stale token 409, restore by
   stock, delete drafts only, actions logged; a token 0.5 ms older is refused).
   **Open:** an item saved with no variants has stock 0, so restore makes it Sold out (rule as given).
+- **Step 5 done (2026-10-18).** `PATCH /api/items/[id]` (`lib/item-edit.ts`), one transaction:
+  version check under `FOR UPDATE` (409, nothing written); variants matched by size key + colour (new
+  ones at quantity 0, quantities sent ignored, removal soft-deletes and is refused while stock > 0 with
+  the sizes listed); one-of-a-kind stays a single piece, turns off only with a colour (same row and
+  quantity), can't turn on; occasions/tags replaced by difference; photos keep/add/drop (soft-delete,
+  files kept; new files removed if the save fails); sellers' cost values ignored; nothing changed → no
+  write, same version. `item.updated` logs before/after of changed fields with names, plus variant
+  and photo summaries (`diffItems`). Validation shared with Add Item in `lib/item-input.ts`; Add
+  Item's POST now uses it, which also turns three former 500s into 400s with a sentence: a malformed
+  id (type, colour, occasion, tag), a size over 20 characters, and a type/colour/occasion/tag that no
+  longer exists. `viaClient()` now runs one query at a time (pg 8.21 warns on overlapping queries).
+  Tests: 37 route tests, 3 diff unit tests, 10 Postgres tests (same-version saves → one 409, racing
+  saves → exactly one wins, duplicate 400 + removed size re-added, stock guard, owner/seller history,
+  seller keeps cost, photo file written/kept, failed save removes its file, one-of-a-kind turn-off).
+  Breaking the version check or the stock guard fails 5 of them.

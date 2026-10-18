@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser, UUID as UUID_REGEX } from "@/lib/auth/guard";
 import { loadItem } from "@/lib/items";
 import { OUT_OF_DATE, changeItemStatus, readVersion } from "@/lib/item-status";
+import { editItem } from "@/lib/item-edit";
 
 // One item with everything the detail screen needs. Cost fields go to the owner only (lib/cost.ts).
 export async function GET(request: Request, { params }: { params: { id: string } }) {
@@ -29,4 +30,13 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const version = await readVersion(request);
   if (!version) return NextResponse.json({ error: OUT_OF_DATE }, { status: 400 });
   return changeItemStatus("delete", params.id, version, g.user);
+}
+
+/** PATCH — one save of the edit form (owner and sellers; sellers can't change cost). See lib/item-edit.ts. */
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const g = await requireUser(request);
+  if (g.response) return g.response;
+  if (!UUID_REGEX.test(params.id)) return NextResponse.json({ error: "Invalid item id" }, { status: 400 });
+  const body = await request.json().catch(() => null);
+  return editItem(params.id, body, g.user);
 }

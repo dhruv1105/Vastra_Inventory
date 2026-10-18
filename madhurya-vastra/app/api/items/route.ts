@@ -1,40 +1,22 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
 import { pool, query } from "@/lib/db";
 import { requireUser } from "@/lib/auth/guard";
-import { LIST_STATUSES, ONE_SIZE, PAGE_SIZE, SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
+import { LIST_STATUSES, PAGE_SIZE, SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
 import { decodeCursor, encodeCursor, toPrefixQuery } from "@/lib/inventory-query";
-import { DUPLICATE_VARIANT, isDuplicateVariantError, normalizeVariantSizes } from "@/lib/variants";
+import {
+  MAX_IMAGES,
+  ONE_OF_A_KIND_SHAPE,
+  TOO_MANY_IMAGES,
+  WrittenFiles,
+  decodeImages,
+  insertImage,
+  isSinglePiece,
+  readItemFields,
+  readVariants,
+  writeErrorMessage,
+} from "@/lib/item-input";
 
-const MAX_IMAGES = 8;
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const ALT_TEXT_MAX = 120;
-const MIME_EXT: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-const WEAR_TYPES = ["top", "bottom", "both"];
 const STATUSES = ["active", "draft"];
-
-type ImageBody = {
-  base64: string;
-  mimeType: string;
-  displayOrder?: number;
-  altText?: string | null;
-};
-
-type VariantBody = {
-  size?: string;
-  colorId?: string | null;
-  quantity?: number;
-  sellingPriceOverride?: number | null;
-  costPriceOverride?: number | null;
-};
-
-const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 /**
  * The inventory list: live items (not archived), newest first, 20 per page.
@@ -147,108 +129,29 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-
-  const {
-    title,
-    description,
-    itemTypeId,
-    wearType,
-    costPrice,
-    sellingPrice,
-    occasionIds = [],
-    tagIds = [],
-    variants = [],
-    images = [],
-    status = "active",
-    isOneOfAKind = false,
-  } = body ?? {};
-
-  // ---- Validation ----
-  if (!title || !String(title).trim()) {
-    return NextResponse.json({ error: "Title is required" }, { status: 400 });
-  }
-  if (String(title).trim().length > 150) {
-    return NextResponse.json({ error: "Title must be 150 characters or less" }, { status: 400 });
-  }
-  if (description && String(description).length > 500) {
-    return NextResponse.json({ error: "Description must be 500 characters or less" }, { status: 400 });
-  }
-  if (!WEAR_TYPES.includes(wearType)) {
-    return NextResponse.json({ error: "Wear type is required" }, { status: 400 });
-  }
-  if (!isNum(sellingPrice) || sellingPrice <= 0) {
-    return NextResponse.json({ error: "Selling price must be greater than 0" }, { status: 400 });
-  }
-  if (costPrice != null && (!isNum(costPrice) || costPrice < 0)) {
-    return NextResponse.json({ error: "Invalid cost price" }, { status: 400 });
-  }
-  if (!STATUSES.includes(status)) {
-    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
-  if (!Array.isArray(occasionIds) || !Array.isArray(tagIds) || !Array.isArray(variants) || !Array.isArray(images)) {
+  if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
-  for (const v of variants as VariantBody[]) {
-    if (!v.size || !String(v.size).trim()) {
-      return NextResponse.json({ error: "Each variant needs a size" }, { status: 400 });
-    }
-    if (!Number.isInteger(v.quantity) || (v.quantity as number) < 0) {
-      return NextResponse.json({ error: "Variant quantity must be 0 or more" }, { status: 400 });
-    }
-    for (const o of [v.sellingPriceOverride, v.costPriceOverride]) {
-      if (o != null && (!isNum(o) || o < 0)) {
-        return NextResponse.json({ error: "Invalid price override" }, { status: 400 });
-      }
-    }
-  }
-  // One spelling per size ("xl" → "XL"); each size + colour once (the DB enforces it too).
-  if (normalizeVariantSizes(variants as VariantBody[]) === "duplicate") {
-    return NextResponse.json({ error: DUPLICATE_VARIANT }, { status: 400 });
-  }
-  if (typeof isOneOfAKind !== "boolean") {
-    return NextResponse.json({ error: "Invalid one-of-a-kind flag" }, { status: 400 });
-  }
-  if (isOneOfAKind) {
-    const [only] = variants as VariantBody[];
-    if (variants.length !== 1 || only.colorId != null || String(only.size).trim() !== ONE_SIZE) {
-      return NextResponse.json({ error: "A one-of-a-kind item is a single piece, with no sizes or colours." }, { status: 400 });
-    }
-  }
-  if (images.length > MAX_IMAGES) {
-    return NextResponse.json({ error: `A maximum of ${MAX_IMAGES} images is allowed` }, { status: 400 });
-  }
+  const { variants: rawVariants = [], images: rawImages = [], status = "active", isOneOfAKind = false } = body;
+  const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
 
-  const decoded: { buffer: Buffer; mimeType: string; displayOrder: number; altText: string | null }[] = [];
-  for (const [i, img] of Array.from((images as ImageBody[]).entries())) {
-    const mimeType = img?.mimeType;
-    if (!MIME_EXT[mimeType]) {
-      return NextResponse.json({ error: "Images must be JPEG, PNG or WebP" }, { status: 400 });
-    }
-    if (typeof img.base64 !== "string") {
-      return NextResponse.json({ error: "Invalid image data" }, { status: 400 });
-    }
-    if (img.altText != null && (typeof img.altText !== "string" || img.altText.length > ALT_TEXT_MAX)) {
-      return NextResponse.json({ error: `Photo descriptions must be ${ALT_TEXT_MAX} characters or less` }, { status: 400 });
-    }
-    const raw = img.base64.replace(/^data:[^;]+;base64,/, "");
-    const buffer = Buffer.from(raw, "base64");
-    if (buffer.length === 0) {
-      return NextResponse.json({ error: "Invalid image data" }, { status: 400 });
-    }
-    if (buffer.length > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: "Each image must be 5MB or smaller" }, { status: 400 });
-    }
-    decoded.push({
-      buffer,
-      mimeType,
-      displayOrder: isNum(img.displayOrder) ? img.displayOrder : i,
-      altText: img.altText ? img.altText.trim() || null : null,
-    });
-  }
+  // ---- Validation (shared with edit: lib/item-input.ts) ----
+  const fields = readItemFields(body);
+  if (fields.error !== undefined) return bad(fields.error);
+  if (!STATUSES.includes(status)) return bad("Invalid status");
+  if (!Array.isArray(rawImages)) return bad("Invalid request body");
+  const checked = readVariants(rawVariants, { withQuantity: true });
+  if (checked.error !== undefined) return bad(checked.error);
+  const variants = checked.value;
+  if (typeof isOneOfAKind !== "boolean") return bad("Invalid one-of-a-kind flag");
+  if (isOneOfAKind && !isSinglePiece(variants)) return bad(ONE_OF_A_KIND_SHAPE);
+  if (rawImages.length > MAX_IMAGES) return bad(TOO_MANY_IMAGES);
+  const images = decodeImages(rawImages);
+  if (images.error !== undefined) return bad(images.error);
+  const f = fields.value;
 
   // ---- Transaction ----
-  const writtenFiles: string[] = [];
-  let writtenDir: string | null = null;
+  const files = new WrittenFiles();
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -259,48 +162,29 @@ export async function POST(request: Request) {
           status, created_by, updated_by, created_at, updated_at, is_one_of_a_kind)
        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $8, NOW(), NOW(), $9)
        RETURNING id, title, status, created_at AS "createdAt"`,
-      [
-        String(title).trim(),
-        description ? String(description).trim() : null,
-        itemTypeId || null,
-        wearType,
-        canSeeCost ? costPrice ?? null : null,
-        sellingPrice,
-        status,
-        userId,
-        isOneOfAKind,
-      ]
+      [f.title, f.description, f.itemTypeId, f.wearType, canSeeCost ? f.costPrice : null, f.sellingPrice, status, userId, isOneOfAKind]
     );
     const item = itemRes.rows[0];
     const itemId: string = item.id;
 
-    for (const [i, v] of Array.from((variants as VariantBody[]).entries())) {
+    for (const [i, v] of Array.from(variants.entries())) {
       await client.query(
         `INSERT INTO variants
            (id, item_id, size, color_id, quantity, selling_price_override,
             cost_price_override, display_order, created_by, updated_by, created_at, updated_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $8, NOW(), NOW())`,
-        [
-          itemId,
-          String(v.size).trim(),
-          v.colorId || null,
-          v.quantity,
-          v.sellingPriceOverride ?? null,
-          canSeeCost ? v.costPriceOverride ?? null : null,
-          i,
-          userId,
-        ]
+        [itemId, v.size, v.colorId, v.quantity, v.sellingPriceOverride, canSeeCost ? v.costPriceOverride : null, i, userId]
       );
     }
 
-    for (const occasionId of Array.from(new Set<string>(occasionIds))) {
+    for (const occasionId of f.occasionIds) {
       await client.query(
         `INSERT INTO item_occasions (item_id, occasion_id, created_by, created_at, updated_by, updated_at)
          VALUES ($1, $2, $3, NOW(), $3, NOW())`,
         [itemId, occasionId, userId]
       );
     }
-    for (const tagId of Array.from(new Set<string>(tagIds))) {
+    for (const tagId of f.tagIds) {
       await client.query(
         `INSERT INTO item_tags (item_id, tag_id, created_by, created_at, updated_by, updated_at)
          VALUES ($1, $2, $3, NOW(), $3, NOW())`,
@@ -308,23 +192,8 @@ export async function POST(request: Request) {
       );
     }
 
-    if (decoded.length > 0) {
-      writtenDir = path.join(process.cwd(), "public", "uploads", "items", itemId);
-      fs.mkdirSync(writtenDir, { recursive: true });
-      for (const img of decoded) {
-        const fileName = `${randomUUID()}.${MIME_EXT[img.mimeType]}`;
-        const filePath = path.join(writtenDir, fileName);
-        fs.writeFileSync(filePath, img.buffer);
-        writtenFiles.push(filePath);
-        const relPath = `/uploads/items/${itemId}/${fileName}`;
-        await client.query(
-          `INSERT INTO images
-             (id, item_id, s3_key, cdn_url, mime_type, size_bytes, display_order, alt_text,
-              created_by, updated_by, created_at, updated_at)
-           VALUES (gen_random_uuid(), $1, $2, $2, $3, $4, $5, $6, $7, $7, NOW(), NOW())`,
-          [itemId, relPath, img.mimeType, img.buffer.length, img.displayOrder, img.altText, userId]
-        );
-      }
+    for (const img of images.value) {
+      await insertImage(client, files, itemId, img, img.displayOrder, userId);
     }
 
     await client.query(
@@ -349,19 +218,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
-    for (const f of writtenFiles) {
-      try {
-        fs.unlinkSync(f);
-      } catch {}
-    }
-    if (writtenDir) {
-      try {
-        fs.rmdirSync(writtenDir);
-      } catch {}
-    }
-    if (isDuplicateVariantError(error)) {
-      return NextResponse.json({ error: DUPLICATE_VARIANT }, { status: 400 });
-    }
+    files.undo();
+    const known = writeErrorMessage(error);
+    if (known) return bad(known);
     if (process.env.NODE_ENV === "development") {
       console.error("POST /api/items failed:", error);
     }

@@ -9,7 +9,15 @@ import type { Item, ItemSellerView } from "@/types";
 
 type Run = (text: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 const viaPool: Run = (text, params) => query(text, params);
-export const viaClient = (client: PoolClient): Run => (text, params) => client.query(text, params);
+/** Inside a transaction: one query at a time on the client (pg warns about overlapping queries). */
+export function viaClient(client: PoolClient): Run {
+  let last: Promise<unknown> = Promise.resolve();
+  return (text, params) => {
+    const next = last.then(() => client.query(text, params));
+    last = next.catch(() => {});
+    return next;
+  };
+}
 
 /** The item with all relations (owner view, cost included), or null when missing or deleted. */
 export async function loadItemFull(id: string, run: Run = viaPool): Promise<Item | null> {
@@ -109,8 +117,11 @@ export function toSellerItem(item: Item): ItemSellerView {
 }
 
 /** The item as `role` may see it: the owner gets everything; sellers get the allowlisted view. */
+export function viewFor(item: Item, role: Role): Item | ItemSellerView {
+  return role === "owner" ? item : forRole(toSellerItem(item), role); // forRole: the safety net
+}
+
 export async function loadItem(id: string, role: Role, run: Run = viaPool): Promise<Item | ItemSellerView | null> {
   const item = await loadItemFull(id, run);
-  if (!item) return null;
-  return role === "owner" ? item : forRole(toSellerItem(item), role); // forRole: the safety net
+  return item && viewFor(item, role);
 }
