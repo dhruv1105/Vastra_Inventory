@@ -26,6 +26,7 @@ describe.skipIf(!URL_)("no cost value in any seller response (Postgres)", () => 
   const itemId = randomUUID();
   let detail: (r: Request, c: { params: { id: string } }) => Promise<Response>;
   let list: (r: Request) => Promise<Response>;
+  let history: (r: Request, c: { params: { id: string } }) => Promise<Response>;
   let endPool: () => Promise<void>;
 
   const raw = async (res: Promise<Response>) => {
@@ -35,10 +36,11 @@ describe.skipIf(!URL_)("no cost value in any seller response (Postgres)", () => 
   };
   const get = (p: string) => new Request(`http://localhost:3000${p}`, { headers: { host: "localhost:3000" } });
 
-  /** Every seller-visible response that can carry this item. Activity log joins in step 3. */
+  /** Every seller-visible response that can carry this item: detail, inventory list, history. */
   const sellerVisible = async () => [
     await raw(detail(get(`/api/items/${itemId}`), { params: { id: itemId } })),
     await raw(list(get(`/api/items?q=${token}`))),
+    await raw(history(get(`/api/items/${itemId}/activity`), { params: { id: itemId } })),
   ];
 
   beforeAll(async () => {
@@ -54,28 +56,47 @@ describe.skipIf(!URL_)("no cost value in any seller response (Postgres)", () => 
       `INSERT INTO variants (item_id, size, quantity, selling_price_override, cost_price_override) VALUES ($1, 'M', 2, 4499, ${COST}), ($1, 'L', 1, NULL, NULL)`,
       [itemId]
     );
+    // History with the cost value in before/after, as an owner's price change would write it.
+    await client.query(
+      `INSERT INTO activity_log (actor_id, action, entity_type, entity_id, payload) VALUES ($1, 'item.updated', 'item', $2, $3)`,
+      [userId, itemId, JSON.stringify({
+        before: { sellingPrice: 4999, costPrice: 3777.77 },
+        after: { sellingPrice: 5199, costPrice: 3800 },
+        variants: { changed: [{ size: "M", costPriceOverride: { before: 3777.77, after: 3800 }, sellingPriceOverride: { before: 4499, after: 4599 } }] },
+      })]
+    );
     ({ GET: list } = await import("@/app/api/items/route"));
+    ({ GET: history } = await import("@/app/api/items/[id]/activity/route"));
     ({ GET: detail } = await import("@/app/api/items/[id]/route"));
     const db = await import("@/lib/db");
     endPool = () => db.pool.end();
   });
 
   afterAll(async () => {
+    await client.query(`DELETE FROM activity_log WHERE entity_id = $1`, [itemId]);
     await client.query(`DELETE FROM items WHERE id = $1`, [itemId]);
     await client.query(`DELETE FROM users WHERE id = $1`, [userId]);
     await client.end();
     await endPool?.();
   });
 
-  it("owner: the cost value is really there (detail)", async () => {
+  it("owner: the cost value is really there (detail and history)", async () => {
     who.role = "owner";
     expect(await raw(detail(get(`/api/items/${itemId}`), { params: { id: itemId } }))).toContain(COST);
+    expect(await raw(history(get(`/api/items/${itemId}/activity`), { params: { id: itemId } }))).toContain(COST);
+  });
+
+  it("seller: a selling price change in the history is still visible", async () => {
+    who.role = "seller";
+    const body = await raw(history(get(`/api/items/${itemId}/activity`), { params: { id: itemId } }));
+    expect(body).toContain("5199");
+    expect(body).toContain("4599");
   });
 
   it("seller: the value appears in none of the responses, under any key", async () => {
     who.role = "seller";
     const bodies = await sellerVisible();
-    expect(bodies).toHaveLength(2);
+    expect(bodies).toHaveLength(3);
     for (const body of bodies) {
       expect(body).not.toContain(COST);
       expect(body).not.toContain("3777.7"); // no rounded form either

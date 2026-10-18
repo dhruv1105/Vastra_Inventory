@@ -198,3 +198,10 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   databases): duplicate abort + message, old constraint/index dropped, live duplicate refused
   (case/spacing, no-colour = no-colour), removed size re-added. Applied to the dev seed with no
   duplicates. 155 tests + 14 Postgres tests pass.
+- **Step 3 done (2026-10-18).** `lib/activity.ts`: `logActivity()` (write, inside the change's
+  transaction) and `readActivity()` (the only reader: entries built field by field, payload through
+  `forRole()`). New `GET /api/items/[id]/activity` (newest 20, owner and seller) for the item's
+  history. Guard test: any `FROM/JOIN activity_log` or Drizzle `from(activityLog)` outside
+  `lib/activity.ts` fails. Route tests: 401 without SQL, 400, seller keeps selling-price changes but
+  loses every cost change, owner sees all, scoped + bounded query. The 3777.77 leak test now covers
+  the history too (and a seller still sees the selling price change); it fails without the filter.
