@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Lock, Pencil, Phone, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Lock, Pencil, Phone, Plus, Trash2 } from "lucide-react";
+import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import Loader from "@/components/ui/Loader";
@@ -202,6 +203,19 @@ export default function KitPreview() {
           <TextField id="k-phone" label="Phone number" leading={<Phone />} inputMode="tel" placeholder="98765 43210" help="We'll text you a 6-digit code." />
         </div>
         <TextAreaField id="k-desc" label="Description" placeholder="Fabric, work, special features…" />
+      </Block>
+
+      <Block title="Badges">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge>Draft</Badge>
+          <Badge tone="primary">Sold out</Badge>
+          <Badge tone="zari" icon={<AlertTriangle aria-hidden="true" />}>
+            Low stock
+          </Badge>
+          <Badge tone="success">In stock</Badge>
+          <Badge tone="danger">Turned off</Badge>
+        </div>
+        <p className="text-sm text-muted">Status labels on cards. The normal case (active) gets no badge.</p>
       </Block>
 
       <Block title="Chips">

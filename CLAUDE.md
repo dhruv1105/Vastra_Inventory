@@ -16,7 +16,8 @@ Inventory and (later) online store for **Madhurya Vastra**, one women's ethnic-w
 The UI redesign (R0–R6) is done: every screen uses the shared kit in `components/ui/` — see
 [docs/redesign/](docs/redesign/README.md) and the screen catalogue [docs/screens.pdf](docs/screens.pdf).
 Real authentication is done (better-auth, A1–A6 — [docs/plans/auth.md](docs/plans/auth.md)).
-Next, per the [roadmap](docs/roadmap.md): the inventory list.
+The inventory list is done ([docs/plans/inventory-list.md](docs/plans/inventory-list.md)).
+Next, per the [roadmap](docs/roadmap.md): item detail / edit.
 
 Full brief: [docs/brief.md](docs/brief.md).
 
@@ -52,17 +53,19 @@ Vastra_Inventory/            git root
   .claude/                   rules, skills, agents, commands
   madhurya-vastra/           THE Next.js app — run every npm command from here
     app/(auth)/              login
-    app/(protected)/         staff screens: inventory, items/new, manage-lists, staff, sales, dashboard
+    app/(protected)/         staff screens: inventory, items/new, items/[id] (placeholder), manage-lists, staff, sales, dashboard
     app/api/                 route handlers (auth/[...all], account/password, staff, items, lookups/*, health)
-    tests/api/               Vitest route tests (permissions + validation)
+    tests/                   Vitest: api/ route tests, lib/ unit tests, db/ Postgres tests (npm run test:db)
     app/kit/                 dev-only preview of the shared kit (404 in production)
-    db/                      Drizzle schema.ts, generated migrations/, re-runnable SQL seeds/
+    db/                      Drizzle schema.ts, generated migrations/, re-runnable SQL seeds/ (seeds/dev = sample items)
     scripts/db.mjs           migrate | seed | status (used by Docker and npm db:* scripts)
     components/layout/       Header, Sidebar, BottomNav
     components/items/        Add Item parts: ImageUploader, VariantMatrix, ChipSelect, SearchableSelect
+    components/inventory/    Inventory list: InventoryCard (phone grid / list, tablet+ card), InventorySkeleton
     components/lookups/      LookupList (Manage Lists)
     lib/theme/               theme config → CSS variables (colours, fonts, radius, motion)
     public/brand/            real logo, mark, vine, app icons (cut from assets/)
+    public/dev-samples/      placeholder fabric photos used by the dev sample items
     context/ hooks/ lib/ types/
 ```
 
@@ -74,7 +77,7 @@ servers; they won't share the `vastra_db-data` volume.
 ```bash
 ./scripts/dev-up.sh          # Postgres + app on http://localhost:3000; migrate + seed on start
 ./scripts/dev-down.sh        # stop, keep data      ./scripts/fresh.sh   wipe + restart (asks)
-./scripts/db.sh migrate|seed|status|shell
+./scripts/db.sh migrate|seed|status|shell   # seed also loads 30 dev sample items (db/seeds/dev)
 ./scripts/logs.sh app
 ./scripts/check.sh [build]   # tsc + lint (+ build) inside the container
 ```
@@ -85,7 +88,8 @@ From `madhurya-vastra/` (host node_modules installed):
 npx tsc --noEmit       # type check — run after EVERY change
 npm run lint           # eslint (next/core-web-vitals)
 npm run build          # production build — run before calling a phase done
-npm test               # Vitest: route permission tests (tests/api)
+npm test               # Vitest: route + unit tests (Postgres tests skipped)
+TEST_DATABASE_URL=postgres://… npm run test:db   # Postgres tests (separate database; see docs/plans/inventory-list.md)
 npm run db:generate -- --name <change>   # after editing db/schema.ts; review the SQL
 ```
 
@@ -103,6 +107,9 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 5. **Phone first.** Every screen works at 390×844, 844×390, 768×1024 and 1366×768 with no
    horizontal scroll.
 6. **Validate on the server.** Client checks are convenience; every route validates its input.
+   Screens call our API only through `apiFetch` (`lib/api-client.ts`): a 401 sends the user to
+   `/login?next=<this page>`, other failures throw `ApiError` with the server's sentence. All new
+   screens must use it — never a bare `fetch` to `/api`.
 7. **Money is exact.** Rupees shown as `₹1,999`; never float arithmetic on prices.
 8. **Stay in scope.** A redesign task changes UI only; any API/DB change is asked first and
    listed in the summary.
@@ -116,7 +123,9 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before mark as sold.
-- **Tests cover API routes only** (68 Vitest route tests in `tests/api/`); no UI tests yet.
+- **Tests cover API routes, helpers, middleware, paging and session checks** (134 Vitest tests + 8
+  Postgres tests via `npm run test:db`); no UI tests yet. Older screens (Staff, Manage Lists, Add
+  Item) still use their own fetch helpers; move them to `apiFetch` when they are next changed.
 
 ## Vocabulary
 

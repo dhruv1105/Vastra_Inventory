@@ -7,7 +7,7 @@ import { BrandMark } from "@/components/ui/Brand";
 import Loader from "@/components/ui/Loader";
 import Intro, { useIntroOnce } from "@/components/ui/Intro";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 import ChangePasswordForm from "@/components/account/ChangePasswordForm";
@@ -42,16 +42,16 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const { user, loading } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
 
   // middleware.ts sends visitors without a session cookie to /login; this catches an expired or
-  // revoked session (e.g. the owner turned the account off).
+  // revoked session (e.g. the owner turned the account off). A full page load, so the login page's
+  // server check runs and clears the stale cookie; the query string is kept in ?next.
   useEffect(() => {
     if (!loading && !user) {
-      router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+      window.location.replace(`/login?next=${encodeURIComponent(pathname + window.location.search)}`);
     }
-  }, [user, loading, router, pathname]);
+  }, [user, loading, pathname]);
 
   if (loading) {
     return (

@@ -147,6 +147,9 @@ export const items = pgTable(
     sellingPrice: money("selling_price").notNull(),
     status: text("status", { enum: ["active", "sold_out", "archived", "draft"] }).notNull().default("active"),
     captionText: text("caption_text"),
+    /** A single piece: exactly one variant ("One Size", no colour). Set by Add Item; editing may only
+     *  add sizes or colours after this is turned off explicitly (roadmap: item detail/edit). */
+    isOneOfAKind: boolean("is_one_of_a_kind").notNull().default(false),
     ...audit(),
     deletedAt: ts("deleted_at"),
   },

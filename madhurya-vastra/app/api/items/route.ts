@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
-import { pool } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { requireUser } from "@/lib/auth/guard";
+import { LIST_STATUSES, ONE_SIZE, PAGE_SIZE, SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
+import { decodeCursor, encodeCursor, toPrefixQuery } from "@/lib/inventory-query";
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -33,6 +35,103 @@ type VariantBody = {
 
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
+/**
+ * The inventory list: live items (not archived), newest first, 20 per page.
+ *   ?q=      title search, by word prefix ("lav geo"), on the GIN index items_live_title_search_idx
+ *   ?cursor= the nextCursor of the previous page
+ * One query per page: cover photo, stock and the lowest variant price come from LATERAL joins.
+ * Read-only, and never selects cost prices — for the owner as well as sellers.
+ */
+export async function GET(request: Request) {
+  const g = await requireUser(request);
+  if (g.response) return g.response;
+
+  const params = new URL(request.url).searchParams;
+  const q = (params.get("q") ?? "").trim();
+  if (q.length > SEARCH_MAX) {
+    return NextResponse.json({ error: `Search is too long (${SEARCH_MAX} characters at most).` }, { status: 400 });
+  }
+  const rawCursor = params.get("cursor");
+  const cursor = rawCursor ? decodeCursor(rawCursor) : null;
+  if (rawCursor && !cursor) {
+    return NextResponse.json({ error: "This list is out of date. Reload the page." }, { status: 400 });
+  }
+
+  const values: unknown[] = [LIST_STATUSES];
+  const where = ["i.deleted_at IS NULL", "i.status = ANY($1::text[])"];
+  const tsquery = toPrefixQuery(q);
+  if (tsquery) {
+    values.push(tsquery);
+    // Must match the index expression exactly (db/schema.ts) for Postgres to use it.
+    where.push(`to_tsvector('simple', i.title) @@ to_tsquery('simple', $${values.length})`);
+  }
+  if (cursor) {
+    // Row comparison on (created_at, id): items saved in one transaction share created_at
+    // (NOW() is the transaction start), so created_at alone would skip or repeat them.
+    values.push(cursor.createdAt, cursor.id);
+    where.push(`(i.created_at, i.id) < ($${values.length - 1}::timestamptz, $${values.length}::uuid)`);
+  }
+  values.push(PAGE_SIZE + 1); // one extra row says whether there is a next page
+
+  try {
+    const { rows } = await query(
+      `SELECT i.id, i.title, i.status,
+              t.name AS "itemTypeName",
+              i.selling_price::float8 AS "sellingPrice",
+              CASE WHEN v.min_override < i.selling_price THEN v.min_override::float8 END AS "fromPrice",
+              img.cdn_url AS "coverUrl", img.alt_text AS "coverAlt",
+              COALESCE(v.total, 0)::int AS "totalStock",
+              v.n::int AS "variantCount",
+              i.is_one_of_a_kind AS "isOneOfAKind",
+              i.created_at::text AS "cursorAt"
+       FROM items i
+       LEFT JOIN item_types t ON t.id = i.item_type_id
+       LEFT JOIN LATERAL (
+         SELECT cdn_url, alt_text FROM images
+         WHERE item_id = i.id AND deleted_at IS NULL
+         ORDER BY display_order, id
+         LIMIT 1
+       ) img ON true
+       LEFT JOIN LATERAL (
+         SELECT SUM(quantity) AS total, COUNT(*) AS n, MIN(selling_price_override) AS min_override
+         FROM variants
+         WHERE item_id = i.id AND deleted_at IS NULL
+       ) v ON true
+       WHERE ${where.join(" AND ")}
+       ORDER BY i.created_at DESC, i.id DESC
+       LIMIT $${values.length}`,
+      values
+    );
+
+    const page = rows.slice(0, PAGE_SIZE);
+    const last = page[page.length - 1];
+    const data: InventoryPage = {
+      items: page.map(
+        (r): InventoryItem => ({
+          id: r.id,
+          title: r.title,
+          status: r.status,
+          itemTypeName: r.itemTypeName,
+          sellingPrice: r.sellingPrice,
+          fromPrice: r.fromPrice,
+          coverUrl: r.coverUrl,
+          coverAlt: r.coverAlt,
+          totalStock: r.totalStock,
+          variantCount: r.variantCount,
+          isOneOfAKind: r.isOneOfAKind === true,
+        })
+      ),
+      nextCursor: rows.length > PAGE_SIZE && last ? encodeCursor({ createdAt: last.cursorAt, id: last.id }) : null,
+    };
+    return NextResponse.json({ data });
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("GET /api/items failed:", error);
+    }
+    return NextResponse.json({ error: "Could not load the inventory. Try again." }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   // Owner and sellers may add items. Who is acting comes from the session, never the body.
   const g = await requireUser(request);
@@ -60,6 +159,7 @@ export async function POST(request: Request) {
     variants = [],
     images = [],
     status = "active",
+    isOneOfAKind = false,
   } = body ?? {};
 
   // ---- Validation ----
@@ -98,6 +198,15 @@ export async function POST(request: Request) {
       if (o != null && (!isNum(o) || o < 0)) {
         return NextResponse.json({ error: "Invalid price override" }, { status: 400 });
       }
+    }
+  }
+  if (typeof isOneOfAKind !== "boolean") {
+    return NextResponse.json({ error: "Invalid one-of-a-kind flag" }, { status: 400 });
+  }
+  if (isOneOfAKind) {
+    const [only] = variants as VariantBody[];
+    if (variants.length !== 1 || only.colorId != null || String(only.size).trim() !== ONE_SIZE) {
+      return NextResponse.json({ error: "A one-of-a-kind item is a single piece, with no sizes or colours." }, { status: 400 });
     }
   }
   if (images.length > MAX_IMAGES) {
@@ -142,8 +251,8 @@ export async function POST(request: Request) {
     const itemRes = await client.query(
       `INSERT INTO items
          (id, title, description, item_type_id, wear_type, cost_price, selling_price,
-          status, created_by, updated_by, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $8, NOW(), NOW())
+          status, created_by, updated_by, created_at, updated_at, is_one_of_a_kind)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $8, NOW(), NOW(), $9)
        RETURNING id, title, status, created_at AS "createdAt"`,
       [
         String(title).trim(),
@@ -154,6 +263,7 @@ export async function POST(request: Request) {
         sellingPrice,
         status,
         userId,
+        isOneOfAKind,
       ]
     );
     const item = itemRes.rows[0];

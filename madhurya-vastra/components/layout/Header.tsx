@@ -12,6 +12,7 @@ import ThemeSwitch from "@/components/ui/ThemeSwitch";
 import Dialog from "@/components/ui/Dialog";
 import ChangePasswordForm from "@/components/account/ChangePasswordForm";
 import { pageTitle } from "./nav";
+import { HIT_AREA, HIT_AREA_ROW } from "@/components/ui/hitArea";
 
 const ROLE_LABEL: Record<string, string> = { owner: "Owner", seller: "Seller" };
 
@@ -31,7 +32,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-nav flex h-16 w-full items-center justify-between gap-3 border-b border-line bg-surface px-4 md:px-6">
-      <Link href="/inventory" className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft">
+      <Link href="/inventory" className={`relative flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft ${HIT_AREA_ROW}`}>
         <BrandMark alt="Madhurya Vastra — home" className="w-10 shrink-0" />
         <Wordmark className="hidden text-2xl md:inline" />
         <span className="truncate font-display text-xl text-fg md:hidden">{title}</span>
@@ -40,7 +41,7 @@ export default function Header() {
       <Menu
         label="Account menu"
         trigger={<span className="font-display text-lg leading-none">{initial}</span>}
-        triggerClassName="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-tint text-primary transition-colors duration-fast hover:border-primary-soft"
+        triggerClassName={`relative grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line bg-tint text-primary transition-colors duration-fast hover:border-primary-soft ${HIT_AREA}`}
       >
         <MenuHeader>
           <div className="truncate font-semibold text-fg">{user?.name || "Signed in"}</div>
