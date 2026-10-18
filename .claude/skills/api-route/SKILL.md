@@ -24,6 +24,10 @@ Type on the client: `ApiResponse<T>` in `types/index.ts`. Status codes: 400 inva
 
 ## 2. Handler steps
 
+0. **Guard first** — `const g = await requireUser(request, { role? }); if (g.response) return g.response;`
+   (`lib/auth/guard.ts`). It returns 401 without a session, 403 for the wrong role, a turned-off
+   account, or a write without a same-site `Origin`. The acting user is `g.user` — never read a
+   `userId` from the body. Sellers never receive or set cost prices.
 1. Parse JSON in its own `try` → 400 "Invalid JSON body".
 2. Validate every field: required, type, length, range, allowed values. (Hand-written today;
    zod planned — when it lands, one schema per route, shared with the form.)
@@ -40,12 +44,20 @@ Schema changes and seed data never go through API routes — use `db/schema.ts` 
 `db/seeds/` (the old `/api/seed` and `/api/migrate` were retired). A dev-only page or route must
 return 404/403 unless `NODE_ENV === "development"` (see `app/kit/page.tsx`).
 
-## 4. Known gaps — do not copy into new routes
+## 4. Permissions (docs/plans/auth.md)
 
-- **`userId` comes from the request body.** Until real auth lands, keep the existing pattern
-  for consistency but mark new routes `// TODO(auth): take user from session`. When Auth.js/
-  better-auth lands, one helper (`requireUser(role?)`) replaces it everywhere.
-- **No role checks.** Same — planned with auth.
-- **`sync-user` defaults to `owner`.** Never default a new user to a privileged role.
-- **Four near-identical lookup route sets** (`lookups/{item-types,colors,occasions,tags}`).
-  A fifth lookup should prompt one shared helper rather than another copy — ask first.
+| Route | Signed-in seller | Owner |
+|---|---|---|
+| GET lookups, GET item | ✓ (item without `costPrice`) | ✓ |
+| POST item-types (from Add Item) | ✓ | ✓ |
+| POST other lookups, PATCH / DELETE any lookup | 403 | ✓ |
+| POST items | ✓ (cost prices dropped) | ✓ |
+| /api/auth/admin/* (staff) | 403 | ✓ |
+
+Lookup routes share `lib/lookups.ts` — add a list by binding a config, not by copying a route.
+
+## 5. Tests
+
+Every route gets Vitest tests in `tests/api/` (fakes in `tests/helpers.ts`): no session → 401
+with no SQL run, wrong role → 403, cross-site write → 403, body `userId` ignored, plus the happy
+path. Run `npm test` in `madhurya-vastra/`.

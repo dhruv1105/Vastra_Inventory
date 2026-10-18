@@ -54,7 +54,7 @@ export default function NewItemPage() {
   }, []);
 
   const addType = async (name: string) => {
-    const created = await lookupRequest<LookupItem>("/api/lookups/item-types", { method: "POST", body: JSON.stringify({ name, userId: user?.id }) });
+    const created = await lookupRequest<LookupItem>("/api/lookups/item-types", { method: "POST", body: JSON.stringify({ name }) });
     setLookups((l) => ({ ...l, itemTypes: [...l.itemTypes, created].sort(byName) }));
     showToast(`Added “${created.name}” to item types`, "success");
     return created;
@@ -71,7 +71,7 @@ export default function NewItemPage() {
       const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload(form, status, user.id)),
+        body: JSON.stringify(buildPayload(form, status)),
       });
       const json: ApiResponse<{ id: string }> = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "The item was not saved. Try again.");
@@ -136,7 +136,7 @@ export default function NewItemPage() {
         <PhotosSection number={1} images={form.images} onChange={(images) => set("images", images)} />
         <DetailsSection number={2} form={form} set={set} errors={errors} itemTypes={lookups.itemTypes} loading={lookupsLoading} onAddType={addType} />
         <ClassifySection number={3} form={form} set={set} occasions={lookups.occasions} tags={lookups.tags} loading={lookupsLoading} />
-        <PriceSection number={4} form={form} set={set} errors={errors} />
+        <PriceSection number={4} form={form} set={set} errors={errors} showCost={user?.role === "owner"} />
         <div className="lg:col-span-2">
           <VariantsSection number={5} form={form} set={set} colors={lookups.colors} errors={errors} />
         </div>

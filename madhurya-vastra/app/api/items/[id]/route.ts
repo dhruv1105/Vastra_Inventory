@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { requireUser, UUID as UUID_REGEX } from "@/lib/auth/guard";
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+  const g = await requireUser(request);
+  if (g.response) return g.response;
   const { id } = params;
   if (!UUID_REGEX.test(id)) {
     return NextResponse.json({ error: "Invalid item id" }, { status: 400 });
@@ -56,9 +57,12 @@ export async function GET(_request: Request, { params }: { params: { id: string 
       ),
     ]);
 
+    // Cost price is staff-private: only the owner receives it.
+    const { costPrice, ...item } = itemRes.rows[0];
     return NextResponse.json({
       data: {
-        ...itemRes.rows[0],
+        ...item,
+        ...(g.user.role === "owner" ? { costPrice } : {}),
         occasions: occasions.rows,
         tags: tags.rows,
         variants: variants.rows,

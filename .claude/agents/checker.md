@@ -15,6 +15,7 @@ Run every command from `madhurya-vastra/`.
 
 - Type check: `npx tsc --noEmit`
 - Lint: `npm run lint` (or `npx next lint --file <path>` for specific files)
+- Tests: `npm test` (Vitest, route permission tests in `tests/api/`)
 - Build: `npm run build` — only when the caller asks (slow; needs env vars, may fail on
   missing `DATABASE_URL` only if a page queries at build time — report that separately).
 

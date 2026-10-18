@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 import { pool } from "@/lib/db";
+import { requireUser } from "@/lib/auth/guard";
 
 const MAX_IMAGES = 8;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -33,6 +34,13 @@ type VariantBody = {
 const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 export async function POST(request: Request) {
+  // Owner and sellers may add items. Who is acting comes from the session, never the body.
+  const g = await requireUser(request);
+  if (g.response) return g.response;
+  const userId = g.user.id;
+  // Sellers never see or set cost prices.
+  const canSeeCost = g.user.role === "owner";
+
   let body;
   try {
     body = await request.json();
@@ -52,7 +60,6 @@ export async function POST(request: Request) {
     variants = [],
     images = [],
     status = "active",
-    userId,
   } = body ?? {};
 
   // ---- Validation ----
@@ -76,9 +83,6 @@ export async function POST(request: Request) {
   }
   if (!STATUSES.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
-  }
-  if (!userId) {
-    return NextResponse.json({ error: "userId is required" }, { status: 400 });
   }
   if (!Array.isArray(occasionIds) || !Array.isArray(tagIds) || !Array.isArray(variants) || !Array.isArray(images)) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
@@ -146,7 +150,7 @@ export async function POST(request: Request) {
         description ? String(description).trim() : null,
         itemTypeId || null,
         wearType,
-        costPrice ?? null,
+        canSeeCost ? costPrice ?? null : null,
         sellingPrice,
         status,
         userId,
@@ -167,7 +171,7 @@ export async function POST(request: Request) {
           v.colorId || null,
           v.quantity,
           v.sellingPriceOverride ?? null,
-          v.costPriceOverride ?? null,
+          canSeeCost ? v.costPriceOverride ?? null : null,
           i,
           userId,
         ]

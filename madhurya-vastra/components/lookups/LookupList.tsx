@@ -16,10 +16,12 @@ type Props = {
   onCreate: (draft: LookupDraft) => Promise<void>;
   onUpdate: (id: string, draft: LookupDraft) => Promise<void>;
   onAskDelete: (item: LookupItem) => void;
+  /** Sellers: names only, no rename / delete buttons. */
+  readOnly?: boolean;
 };
 
 /** One surface of rows (two columns on wide screens). Rows edit in place. */
-export default function LookupList({ list, items, editing, onStartEdit, onCancel, onCreate, onUpdate, onAskDelete }: Props) {
+export default function LookupList({ list, items, editing, onStartEdit, onCancel, onCreate, onUpdate, onAskDelete, readOnly }: Props) {
   return (
     <div className="grid overflow-hidden rounded-lg border border-line bg-surface lg:grid-cols-2">
       {editing === "new" && (
@@ -54,6 +56,7 @@ export default function LookupList({ list, items, editing, onStartEdit, onCancel
             )}
             <span className="min-w-0 flex-1 truncate font-medium text-fg">{item.name}</span>
             {list.hasColor && item.hexCode && <span className="font-mono text-xs uppercase tabular-nums text-muted">{item.hexCode}</span>}
+            {!readOnly && (
             <span className="flex shrink-0">
               <IconButton label={`Rename ${item.name}`} onClick={() => onStartEdit(item.id)}>
                 <Pencil />
@@ -62,6 +65,7 @@ export default function LookupList({ list, items, editing, onStartEdit, onCancel
                 <Trash2 />
               </IconButton>
             </span>
+            )}
           </div>
         ),
       )}

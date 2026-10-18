@@ -36,6 +36,10 @@ export async function lookupRequest<T>(url: string, init?: RequestInit): Promise
     throw new Error("Could not reach the server. Check your connection and try again.");
   }
   const body = await res.json().catch(() => ({}));
+  if (res.status === 401 && typeof window !== "undefined") {
+    // Session ended (expired, signed out elsewhere, account turned off): back to sign-in.
+    window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+  }
   if (!res.ok) throw new Error(body.error || "Something went wrong. Try again.");
   return body.data as T;
 }

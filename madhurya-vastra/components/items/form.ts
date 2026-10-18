@@ -111,8 +111,8 @@ export function buildVariants(form: ItemFormData): VariantInput[] {
   return out;
 }
 
-/** Body for POST /api/items — unchanged from before the redesign. */
-export function buildPayload(form: ItemFormData, status: "active" | "draft", userId: string) {
+/** Body for POST /api/items. Who is adding it comes from the session on the server. */
+export function buildPayload(form: ItemFormData, status: "active" | "draft") {
   const cost = num(form.costPrice);
   return {
     title: form.title.trim(),
@@ -126,6 +126,5 @@ export function buildPayload(form: ItemFormData, status: "active" | "draft", use
     variants: buildVariants(form),
     images: form.images.map((i, idx) => ({ base64: i.base64, mimeType: i.mimeType, displayOrder: idx, altText: i.altText })),
     status,
-    userId,
   };
 }

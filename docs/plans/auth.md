@@ -101,3 +101,13 @@ Customer accounts, two-factor auth, audit screen, email verification flows.
   wrong try is rate-limited.
   **Deployment note:** behind a proxy, trust its client-IP header (better-auth
   `advanced.ipAddress.ipAddressHeaders`), otherwise every visitor shares one rate-limit bucket.
+- **A3 done (2026-10-18).** `requireUser(request, { role })` (`lib/auth/guard.ts`) on every API
+  route: 401 without a session, 403 for the wrong role / turned-off account / a write without a
+  same-site Origin. `userId` removed from all request bodies; the session user is recorded. The
+  four lookup route sets now share `lib/lookups.ts` (also new: activity_log entries for list
+  changes, 404 instead of 500 for a malformed id). Sellers: cost price neither returned nor
+  stored, Add Item hides cost and margin, Manage Lists is view-only. `/api/health` no longer
+  returns database error text. Client: a 401 from the API sends the user to /login.
+  Vitest 3.2.4 (Vitest 5 needs Node 22): 47 route tests in `tests/api/`. Live-checked as owner and
+  seller on Postgres (statuses, created_by = real user, cost_price null for the seller's item,
+  activity rows) and in the browser for both roles.

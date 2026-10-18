@@ -13,6 +13,8 @@ type Props = {
   set: <K extends keyof ItemFormData>(key: K, value: ItemFormData[K]) => void;
   errors: Errors;
   number: number;
+  /** Cost price and margin are for the owner only. */
+  showCost: boolean;
 };
 
 /** Keep digits and one decimal point; prices are typed on phone keypads. */
@@ -22,11 +24,12 @@ const money = (raw: string) => {
   return rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole;
 };
 
-export default function PriceSection({ form, set, errors, number }: Props) {
-  const m = marginOf(form);
+export default function PriceSection({ form, set, errors, number, showCost }: Props) {
+  const m = showCost ? marginOf(form) : null;
   return (
     <Section id="price" title="Price" number={number}>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className={cn("grid gap-4", showCost && "sm:grid-cols-2")}>
+        {showCost && (
         <TextField
           id="item-cost"
           label="Cost price"
@@ -43,6 +46,7 @@ export default function PriceSection({ form, set, errors, number }: Props) {
           value={form.costPrice}
           onChange={(e) => set("costPrice", money(e.target.value))}
         />
+        )}
         <TextField
           id="item-sell"
           label="Selling price"

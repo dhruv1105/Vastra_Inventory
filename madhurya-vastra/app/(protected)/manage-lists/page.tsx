@@ -21,6 +21,8 @@ const EMPTY: Data = { types: [], colors: [], occasions: [], tags: [] };
 
 export default function ManageListsPage() {
   const { user } = useAuth();
+  // Sellers can look up the lists; only the owner changes them (the API enforces this too).
+  const canEdit = user?.role === "owner";
   const { showToast } = useToast();
   const [tab, setTab] = useState<ListKey>("types");
   const [data, setData] = useState<Data>(EMPTY);
@@ -60,7 +62,7 @@ export default function ManageListsPage() {
   const put = (key: ListKey, next: LookupItem[]) => setData((d) => ({ ...d, [key]: [...next].sort(byName) }));
 
   const body = (draft: LookupDraft) =>
-    JSON.stringify({ name: draft.name, ...(list.hasColor ? { hexCode: draft.hexCode || null } : {}), userId: user?.id });
+    JSON.stringify({ name: draft.name, ...(list.hasColor ? { hexCode: draft.hexCode || null } : {}) });
 
   const create = async (draft: LookupDraft) => {
     const item = await lookupRequest<LookupItem>(`/api/lookups/${list.endpoint}`, { method: "POST", body: body(draft) });
@@ -79,7 +81,7 @@ export default function ManageListsPage() {
   const remove = async () => {
     if (!toDelete) return;
     try {
-      await lookupRequest(`/api/lookups/${list.endpoint}/${toDelete.id}`, { method: "DELETE", body: JSON.stringify({ userId: user?.id }) });
+      await lookupRequest(`/api/lookups/${list.endpoint}/${toDelete.id}`, { method: "DELETE" });
       put(tab, data[tab].filter((i) => i.id !== toDelete.id));
       showToast(`Deleted “${toDelete.name}”`, "success");
       setToDelete(null);
@@ -98,11 +100,13 @@ export default function ManageListsPage() {
       <PageHeader
         eyebrow="Shop settings"
         title="Manage Lists"
-        subtitle="The choices staff pick from when adding an item."
+        subtitle={canEdit ? "The choices staff pick from when adding an item." : "The choices staff pick from when adding an item. Only the owner can change them."}
         action={
-          <Button icon={<Plus />} onClick={startAdd} disabled={status !== "ready"}>
-            Add {list.singular}
-          </Button>
+          canEdit && (
+            <Button icon={<Plus />} onClick={startAdd} disabled={status !== "ready"}>
+              Add {list.singular}
+            </Button>
+          )
         }
       />
 
@@ -146,6 +150,7 @@ export default function ManageListsPage() {
                     onCreate={create}
                     onUpdate={update}
                     onAskDelete={setToDelete}
+                    readOnly={!canEdit}
                   />
                   <p className="text-sm text-muted" aria-live="polite">
                     {q.trim() ? `${shown.length} of ${data[tab].length} ${list.label.toLowerCase()}` : `${data[tab].length} ${list.label.toLowerCase()}`}
@@ -156,8 +161,8 @@ export default function ManageListsPage() {
                   Check the spelling, or add it as a new {list.singular}.
                 </EmptyState>
               ) : (
-                <EmptyState compact title={`No ${list.label.toLowerCase()} yet`} action={<Button icon={<Plus />} onClick={startAdd}>Add {list.singular}</Button>}>
-                  Staff pick from this list when adding an item. Add the first one.
+                <EmptyState compact title={`No ${list.label.toLowerCase()} yet`} action={canEdit && <Button icon={<Plus />} onClick={startAdd}>Add {list.singular}</Button>}>
+                  {canEdit ? "Staff pick from this list when adding an item. Add the first one." : "The owner hasn't added any yet."}
                 </EmptyState>
               )}
             </>

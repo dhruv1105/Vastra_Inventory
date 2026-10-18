@@ -12,11 +12,11 @@ export async function GET() {
       dbResult: result.rows[0]
     }, { status: 200 });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
+    // Public route: log the cause on the server, never send database details to the caller.
+    console.error('health check failed:', error instanceof Error ? error.message : error);
     return NextResponse.json({
       status: 'error',
       db: 'disconnected',
-      message: message,
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }

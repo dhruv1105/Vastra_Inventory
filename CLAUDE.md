@@ -82,6 +82,7 @@ From `madhurya-vastra/` (host node_modules installed):
 npx tsc --noEmit       # type check — run after EVERY change
 npm run lint           # eslint (next/core-web-vitals)
 npm run build          # production build — run before calling a phase done
+npm test               # Vitest: route permission tests (tests/api)
 npm run db:generate -- --name <change>   # after editing db/schema.ts; review the SQL
 ```
 
@@ -111,8 +112,6 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
-- **No server-side auth.** Routes trust `userId` from the request body; `sync-user` creates
-  every new user as `owner`. Planned: Auth.js/better-auth after the redesign.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before Sales.
 - No tests yet (Vitest planned).
 
