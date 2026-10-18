@@ -14,14 +14,17 @@ sharara sets. Stock varies by size and colour; many pieces are one-of-a-kind.
 
 ## Phase 1 — inventory (now)
 
-Built: login (dev bypass only), Add Item (photos, details, classification, pricing with margin,
+Built: real sign-in (better-auth — phone/email + password, optional Google and text-message
+codes; the owner adds staff on the Staff screen; owner/seller roles checked on the server — see
+[plans/auth.md](plans/auth.md)), Add Item (photos, details, classification, pricing with margin,
 size × colour grid with price overrides, draft/active), Manage Lists (types, colours, occasions,
-tags), responsive shell (header, collapsible sidebar, bottom nav).
+tags), responsive shell (header, collapsible sidebar, bottom nav), all on the redesigned UI kit.
 
-To build: inventory list/grid, item detail/edit, stock adjustments, sales/billing, dashboard,
-real authentication.
+To build, in order (see [roadmap.md](roadmap.md)): inventory list → item detail/edit → caption
+templates + sharing to WhatsApp/Instagram (mandatory in phase 1) → S3 photo storage + hosting →
+stock-movement ledger → mark as sold → dashboard + activity log.
 
-**Current step: UI redesign of the built screens** — see [redesign/README.md](redesign/README.md).
+**Current step: inventory list.**
 
 ## Phase 2 — customers
 

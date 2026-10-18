@@ -10,12 +10,13 @@ Inventory and (later) online store for **Madhurya Vastra**, one women's ethnic-w
 
 | Phase | Who uses it | Scope |
 |---|---|---|
-| **1 — now** | Owner and sellers (staff), mostly on phones in the shop | Add/edit items, stock, lists, sales, dashboard |
+| **1 — now** | Owner and sellers (staff), mostly on phones in the shop | Add/edit items, stock, lists, sharing to WhatsApp/Instagram, mark as sold, dashboard |
 | **2 — later** | Customers, on web and phone | Storefront, cart, orders, online payment |
 
 The UI redesign (R0–R6) is done: every screen uses the shared kit in `components/ui/` — see
 [docs/redesign/](docs/redesign/README.md) and the screen catalogue [docs/screens.pdf](docs/screens.pdf).
-Next, per the roadmap: real authentication (Auth.js / better-auth), then the inventory list.
+Real authentication is done (better-auth, A1–A6 — [docs/plans/auth.md](docs/plans/auth.md)).
+Next, per the [roadmap](docs/roadmap.md): the inventory list.
 
 Full brief: [docs/brief.md](docs/brief.md).
 
@@ -31,9 +32,10 @@ Full brief: [docs/brief.md](docs/brief.md).
 | PWA | `next-pwa` (disabled in development) |
 | Auth | better-auth (`lib/auth/server.ts`): sessions in Postgres; phone/email + password, Google and text-message codes (each on only when configured); roles owner/seller; owner adds staff on /staff (no public sign-up); every API route uses `requireUser()` (`lib/auth/guard.ts`) |
 
-Installed on purpose: GSAP (intro only, loaded lazily), Drizzle ORM + drizzle-kit.
-Planned, not installed yet — never import them until added on purpose: zod, Vitest,
-Auth.js/better-auth, Lenis/React Bits (storefront only, phase 2).
+Installed on purpose: GSAP (intro only, loaded lazily), Drizzle ORM + drizzle-kit, better-auth,
+Vitest (route tests).
+Planned, not installed yet — never import them until added on purpose: zod, Lenis/React Bits
+(storefront only, phase 2).
 
 Brand: logo violet `#6D37C0`, Indian-feel typography and logo motifs on every screen,
 light + dark — see the `ui-kit` skill.
@@ -50,8 +52,9 @@ Vastra_Inventory/            git root
   .claude/                   rules, skills, agents, commands
   madhurya-vastra/           THE Next.js app — run every npm command from here
     app/(auth)/              login
-    app/(protected)/         staff screens: inventory, items/new, manage-lists, sales, dashboard
-    app/api/                 route handlers (items, lookups/*, auth/sync-user, health)
+    app/(protected)/         staff screens: inventory, items/new, manage-lists, staff, sales, dashboard
+    app/api/                 route handlers (auth/[...all], account/password, staff, items, lookups/*, health)
+    tests/api/               Vitest route tests (permissions + validation)
     app/kit/                 dev-only preview of the shared kit (404 in production)
     db/                      Drizzle schema.ts, generated migrations/, re-runnable SQL seeds/
     scripts/db.mjs           migrate | seed | status (used by Docker and npm db:* scripts)
@@ -112,8 +115,8 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
-- **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before Sales.
-- No tests yet (Vitest planned).
+- **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before mark as sold.
+- **Tests cover API routes only** (68 Vitest route tests in `tests/api/`); no UI tests yet.
 
 ## Vocabulary
 
