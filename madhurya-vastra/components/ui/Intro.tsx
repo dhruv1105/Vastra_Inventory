@@ -92,7 +92,7 @@ export default function Intro({ onDone }: { onDone: () => void }) {
         <span className="absolute h-96 w-96 rounded-full border border-primary opacity-0" />
       </div>
       <div ref={logo} className="relative w-72 max-w-full opacity-0">
-        <Logo priority className="max-w-none" />
+        <Logo priority className="w-full" />
       </div>
       <button
         type="button"

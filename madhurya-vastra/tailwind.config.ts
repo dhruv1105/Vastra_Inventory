@@ -11,6 +11,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        // Phone landscape and other very short viewports: slimmer chrome.
+        short: { raw: "(max-height: 500px)" },
+      },
       colors: {
         primary: { DEFAULT: c("primary"), hover: c("primary-hover"), soft: c("primary-soft"), on: c("on-primary") },
         tint: { DEFAULT: c("tint"), strong: c("tint-strong") },

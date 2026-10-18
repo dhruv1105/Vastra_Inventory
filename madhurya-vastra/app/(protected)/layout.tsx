@@ -3,6 +3,9 @@
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import BottomNav from "@/components/layout/BottomNav";
+import { BrandMark } from "@/components/ui/Brand";
+import Loader from "@/components/ui/Loader";
+import Intro, { useIntroOnce } from "@/components/ui/Intro";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -10,15 +13,18 @@ import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { expanded } = useSidebar();
+  // First open of the app in this browser session: the logo intro (skipped with reduced motion).
+  const [showIntro, introDone] = useIntroOnce();
   return (
     <div
-      style={{ "--sidebar-w": expanded ? "16rem" : "5rem" } as React.CSSProperties}
-      className="flex flex-col min-h-screen bg-brand-background text-brand-text-primary"
+      style={{ "--sidebar-w": expanded ? "15rem" : "5.5rem" } as React.CSSProperties}
+      className="flex min-h-dvh flex-col bg-canvas text-fg"
     >
+      {showIntro && <Intro onDone={introDone} />}
       <Header />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 min-w-0 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:pb-0">
+        <main className="min-w-0 flex-1 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] md:pb-0">
           {children}
         </main>
       </div>
@@ -46,8 +52,11 @@ export default function ProtectedLayout({
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-brand-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary"></div>
+      <div className="grid min-h-dvh place-items-center bg-canvas">
+        <div className="grid justify-items-center gap-4 text-primary">
+          <BrandMark className="w-24" />
+          <Loader label="Opening Madhurya Vastra" />
+        </div>
       </div>
     );
   }

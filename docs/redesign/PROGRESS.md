@@ -29,7 +29,7 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
 - [x] R1.5 Kit: ConfirmDialog, Toast (restyle), Tabs, Menu; z-index layer tokens
 - [x] R1.6 Dark mode: ThemeProvider, ThemeSwitch, no-flash boot script, lavender tokens
 - [x] R1.7 Motion: GSAP (lazy), Intro + useIntroOnce, `.mv-stagger` page entrance, reduced-motion
-- [ ] R2 Shell: header title/back, Manage Lists reachable, user menu, collapsed sidebar
+- [x] R2 Shell: header title, Manage Lists in nav, account menu + theme, sidebar rail, intro
 - [ ] R3 Manage Lists on the kit
 - [ ] R4.1 Add Item split into section components (no visual change)
 - [ ] R4.2 Add Item section nav + collapsible sections
@@ -64,3 +64,12 @@ Plan: [README.md](README.md) · Baseline: [../screens.pdf](../screens.pdf)
   itself and is skipped with reduced motion. `/kit` returns 404 in production.
   Not wired yet: ThemeSwitch → user menu (R2), Intro → first open (R2) and login (R5),
   `.mv-stagger` → each screen as it is converted.
+- 2026-10-18 Docker dev stack + Drizzle (branch chore/docker-db, fast-forwarded into main locally).
+- 2026-10-18 R2 (branch redesign/r2): one NAV list (components/layout/nav.ts) drives sidebar,
+  bottom nav and phone header title; Manage Lists is a nav item (gear icon removed); account
+  menu on the kit Menu with role label, Theme switch, Sign out; sidebar rail uses 12px labels +
+  tooltips + full aria-labels; intro plays on first open per session; branded loading screen.
+  Fixed: brand images took their default width over the caller's (w-28 beat w-10). Browser-checked
+  at 390×844, 844×390, 768×1024, 1366×768: 5 nav links, active item correct, menu closes on Esc
+  (focus back) and outside tap, no horizontal scroll, no failed requests. Pages still show their
+  old in-page titles on phones until R3–R5 convert them.

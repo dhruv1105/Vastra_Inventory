@@ -117,8 +117,8 @@ Lenis / Vanta / React Bits stay out of the staff app (storefront, phase 2).
 - Raw hex/rgb in `className` or `style` (except data: a lookup colour swatch's `hexCode`).
 - Tailwind palette classes (`gray-*`, `red-*`, `purple-*` …) — use tokens.
 - Arbitrary values (`rounded-[12px]`, `text-[10px]`, `z-[60]`) — add a token. Stacking uses
-  `z-nav | z-menu | z-toast | z-dialog`. Only exception: `calc()` with `env(safe-area-inset-*)`
-  or `--bottom-nav-h` for phone safe areas.
+  `z-nav | z-menu | z-toast | z-dialog`. Only exception: layout `calc()` with
+  `env(safe-area-inset-*)`, `--bottom-nav-h` or the 4rem header height.
 - `window.confirm` / `alert` — use `ConfirmDialog` / toast.
 - A button, input, chip, card or empty state written inline in a page — use or extend the kit.
 - Card inside a card. Motif behind body text.
@@ -154,8 +154,12 @@ No horizontal page scroll. Tap targets ≥ 44px. Bottom padding respects
 
 ## 9. Navigation
 
-Sidebar / bottom nav items: Inventory · Add Item · Sales · Dashboard · **Manage Lists** (own
-item). On phone, five bottom-nav items is the maximum.
+One list, `components/layout/nav.ts` (`NAV`), feeds the sidebar, the bottom nav and the phone
+header title — add a screen there, never in one place only. Items: Inventory · Add Item ·
+Sales · Dashboard · **Manage Lists** ("Lists" on the phone bar). Five bottom-nav items is the
+maximum. Active item: tint + primary text + a small zari dot. On phones the header shows the
+screen name and `PageHeader` hides its visible title (kept for screen readers). Account menu
+(avatar): name, role label, Theme switch, Sign out.
 
 ## 10. Words
 
