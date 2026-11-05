@@ -13,7 +13,8 @@ import { SkeletonRows } from "@/components/ui/Skeleton";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import LookupList from "@/components/lookups/LookupList";
 import type { LookupDraft } from "@/components/lookups/LookupEditor";
-import { byName, LISTS, lookupRequest, type ListKey } from "@/components/lookups/lists";
+import { byName, LISTS, type ListKey } from "@/components/lookups/lists";
+import { apiFetch } from "@/lib/api-client";
 import type { LookupItem } from "@/types";
 
 type Data = Record<ListKey, LookupItem[]>;
@@ -36,7 +37,7 @@ export default function ManageListsPage() {
   const load = useCallback(async () => {
     setStatus("loading");
     try {
-      const results = await Promise.all(LISTS.map((l) => lookupRequest<LookupItem[]>(`/api/lookups/${l.endpoint}`)));
+      const results = await Promise.all(LISTS.map((l) => apiFetch<LookupItem[]>(`/api/lookups/${l.endpoint}`)));
       setData(Object.fromEntries(LISTS.map((l, i) => [l.key, results[i] ?? []])) as Data);
       setStatus("ready");
     } catch {
@@ -65,14 +66,14 @@ export default function ManageListsPage() {
     JSON.stringify({ name: draft.name, ...(list.hasColor ? { hexCode: draft.hexCode || null, hexCode2: draft.hexCode2 || null } : {}) });
 
   const create = async (draft: LookupDraft) => {
-    const item = await lookupRequest<LookupItem>(`/api/lookups/${list.endpoint}`, { method: "POST", body: body(draft) });
+    const item = await apiFetch<LookupItem>(`/api/lookups/${list.endpoint}`, { method: "POST", body: body(draft) });
     put(tab, [...data[tab], item]);
     setEditing(null);
     showToast(`Added “${item.name}”`, "success");
   };
 
   const update = async (id: string, draft: LookupDraft) => {
-    const item = await lookupRequest<LookupItem>(`/api/lookups/${list.endpoint}/${id}`, { method: "PATCH", body: body(draft) });
+    const item = await apiFetch<LookupItem>(`/api/lookups/${list.endpoint}/${id}`, { method: "PATCH", body: body(draft) });
     put(tab, data[tab].map((i) => (i.id === id ? item : i)));
     setEditing(null);
     showToast("Saved", "success");
@@ -81,7 +82,7 @@ export default function ManageListsPage() {
   const remove = async () => {
     if (!toDelete) return;
     try {
-      await lookupRequest(`/api/lookups/${list.endpoint}/${toDelete.id}`, { method: "DELETE" });
+      await apiFetch(`/api/lookups/${list.endpoint}/${toDelete.id}`, { method: "DELETE" });
       put(tab, data[tab].filter((i) => i.id !== toDelete.id));
       showToast(`Deleted “${toDelete.name}”`, "success");
       setToDelete(null);

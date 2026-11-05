@@ -26,20 +26,3 @@ export const NAME_MAX = 50;
 export const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 export const byName = (a: LookupItem, b: LookupItem) => a.name.localeCompare(b.name);
-
-/** Calls the lookup API; throws an Error carrying the server's plain-sentence message. */
-export async function lookupRequest<T>(url: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(url, { ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
-  } catch {
-    throw new Error("Could not reach the server. Check your connection and try again.");
-  }
-  const body = await res.json().catch(() => ({}));
-  if (res.status === 401 && typeof window !== "undefined") {
-    // Session ended (expired, signed out elsewhere, account turned off): back to sign-in.
-    window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`);
-  }
-  if (!res.ok) throw new Error(body.error || "Something went wrong. Try again.");
-  return body.data as T;
-}
