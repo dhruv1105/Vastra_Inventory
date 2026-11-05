@@ -15,6 +15,8 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   icon?: ReactNode;
   iconRight?: ReactNode;
   fullWidth?: boolean;
+  /** Phones (below `sm`): a square icon-only button; the label stays for screen readers. Needs `icon`. */
+  iconOnlyOnPhone?: boolean;
 };
 
 const base =
@@ -39,9 +41,17 @@ const sizes: Record<ButtonSize, string> = {
   md: "min-h-11 px-5 text-base [&_svg]:h-5 [&_svg]:w-5",
 };
 
+/** Icon-only on phones: square, no padding, label hidden visually (kept for screen readers). */
+const phoneSizes: Record<ButtonSize, string> = {
+  sm: "min-h-9 w-9 px-0 sm:w-auto sm:px-3 text-sm [&_svg]:h-4 [&_svg]:w-4",
+  md: "min-h-11 w-11 px-0 sm:w-auto sm:px-5 text-base [&_svg]:h-5 [&_svg]:w-5",
+};
+const sizeClass = (size: ButtonSize, iconOnlyOnPhone?: boolean) => (iconOnlyOnPhone ? phoneSizes : sizes)[size];
+const label = (children: ReactNode, iconOnlyOnPhone?: boolean) => (iconOnlyOnPhone ? <span className="sr-only sm:not-sr-only">{children}</span> : children);
+
 /** The one button. One `primary` per screen; the rest secondary/ghost; `danger` only to delete. */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { variant = "primary", size = "md", loading = false, icon, iconRight, fullWidth, className, children, disabled, type, ...rest },
+  { variant = "primary", size = "md", loading = false, icon, iconRight, fullWidth, iconOnlyOnPhone, className, children, disabled, type, ...rest },
   ref,
 ) {
   return (
@@ -50,11 +60,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       type={type ?? "button"}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={cn(base, variants[variant], sizes[size], fullWidth && "w-full", className)}
+      className={cn(base, variants[variant], sizeClass(size, iconOnlyOnPhone), fullWidth && "w-full", className)}
       {...rest}
     >
       {loading ? <Loader size="sm" label="Working" /> : icon}
-      {children}
+      {label(children, iconOnlyOnPhone)}
       {!loading && iconRight}
     </button>
   );
@@ -67,15 +77,24 @@ export function LinkButton({
   variant = "primary",
   size = "md",
   icon,
+  iconOnlyOnPhone,
   className,
   children,
   ...rest
 }: LinkProps &
-  Pick<AnchorHTMLAttributes<HTMLAnchorElement>, "target" | "rel"> & { variant?: ButtonVariant; size?: ButtonSize; icon?: ReactNode; className?: string; children: ReactNode }) {
+  Pick<AnchorHTMLAttributes<HTMLAnchorElement>, "target" | "rel"> & {
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    icon?: ReactNode;
+    /** See Button. */
+    iconOnlyOnPhone?: boolean;
+    className?: string;
+    children: ReactNode;
+  }) {
   return (
-    <Link className={cn(base, variants[variant], sizes[size], className)} {...rest}>
+    <Link className={cn(base, variants[variant], sizeClass(size, iconOnlyOnPhone), className)} {...rest}>
       {icon}
-      {children}
+      {label(children, iconOnlyOnPhone)}
     </Link>
   );
 }

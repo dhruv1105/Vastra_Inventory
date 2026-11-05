@@ -26,8 +26,10 @@ export type PageHeaderProps = {
  */
 export default function PageHeader({ title, eyebrow, subtitle, action, back, titleOnPhone, className }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-wrap items-end justify-between gap-3 short:items-center", className)}>
-      <div className="grid min-w-0 gap-0.5">
+    // Title and action share one line on every screen size: a long title wraps in its own column
+    // instead of pushing the action below it (give phone actions icon-only buttons to keep them small).
+    <div className={cn("flex items-end justify-between gap-3 short:items-center", className)}>
+      <div className="grid min-w-0 flex-1 gap-0.5">
         {back && (
           <Link
             href={back.href}
@@ -43,7 +45,7 @@ export default function PageHeader({ title, eyebrow, subtitle, action, back, tit
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
         <Vine className="mt-2 hidden w-44 md:block short:hidden" />
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }

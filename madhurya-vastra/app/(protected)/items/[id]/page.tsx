@@ -70,8 +70,8 @@ export default function ItemPage({ params }: { params: { id: string } }) {
         back={BACK}
         action={
           <div className="flex items-center gap-2">
-            <LinkButton href={`/items/${item.id}/edit`} icon={<Pencil />}>
-              Edit
+            <LinkButton href={`/items/${item.id}/edit`} icon={<Pencil />} iconOnlyOnPhone>
+              Edit<span className="sr-only"> item</span>
             </LinkButton>
             <ItemActions
               item={item}
@@ -146,7 +146,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
             </dl>
           </Section>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1">
               <Button variant="secondary" icon={<Share2 />} disabled fullWidth>
                 Share
