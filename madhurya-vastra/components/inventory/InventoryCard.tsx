@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Share2 } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
 import Badge from "@/components/ui/Badge";
 import { BrandMark } from "@/components/ui/Brand";
 import { formatINR } from "@/lib/format";
@@ -54,19 +55,23 @@ function Badges({ item, className }: { item: InventoryItem; className?: string }
  *   2-line title and one "price · stock" line, so every card in a row is the same height.
  * - Phone, list: a row with the thumbnail on the left.
  * - Tablet and up: the portrait card (both layouts).
+ * Active items get a share button in the top-right corner (a sibling of the link, not inside it).
  */
-export default function InventoryCard({ item, layout = "grid" }: { item: InventoryItem; layout?: InventoryLayout }) {
+export default function InventoryCard({ item, layout = "grid", onShare }: { item: InventoryItem; layout?: InventoryLayout; onShare?: (item: InventoryItem) => void }) {
   const soldOut = item.status === "sold_out";
+  const canShare = !!onShare && item.status === "active";
   const grid = layout === "grid";
   const stock = stockText(item);
   const shortStock = stockText(item, true);
 
   return (
+    <div className="relative h-full">
     <Link
       href={`/items/${item.id}`}
       className={cn(
         "group flex rounded-lg border border-line bg-surface transition-colors duration-fast ease-brand",
         "hover:border-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft",
+        "h-full",
         grid ? "flex-col overflow-hidden" : "gap-3 p-2.5",
         "md:flex-col md:gap-0 md:overflow-hidden md:p-0",
       )}
@@ -96,10 +101,10 @@ export default function InventoryCard({ item, layout = "grid" }: { item: Invento
           )}
         </div>
         {/* Phone grid: badges ride on the photo so they never change the card's height. */}
-        {grid && <Badges item={item} className="absolute left-1.5 top-1.5 right-1.5 md:hidden" />}
+        {grid && <Badges item={item} className={cn("absolute left-1.5 top-1.5 md:hidden", canShare ? "right-12" : "right-1.5")} />}
       </div>
 
-      <div className={cn("grid min-w-0 flex-1 content-start gap-1 md:p-3", grid && "p-2.5")}>
+      <div className={cn("grid min-w-0 flex-1 content-start gap-1 md:p-3", grid && "p-2.5", !grid && canShare && "pr-10 md:pr-3")}>
         <h2
           className={cn(
             "line-clamp-2 font-semibold leading-snug md:text-base",
@@ -129,5 +134,16 @@ export default function InventoryCard({ item, layout = "grid" }: { item: Invento
         </div>
       </div>
     </Link>
+    {canShare && (
+      <IconButton
+        size="sm"
+        label={`Share ${item.title}`}
+        onClick={() => onShare(item)}
+        className="absolute right-1.5 top-1.5 rounded-full bg-surface/90 text-fg shadow-md hover:bg-surface"
+      >
+        <Share2 />
+      </IconButton>
+    )}
+    </div>
   );
 }

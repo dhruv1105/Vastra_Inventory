@@ -10,6 +10,7 @@ import IconButton from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import InventoryCard, { type InventoryLayout } from "@/components/inventory/InventoryCard";
 import InventorySkeleton, { listClass } from "@/components/inventory/InventorySkeleton";
+import ItemShareSheet from "@/components/share/ItemShareSheet";
 import { cn } from "@/lib/cn";
 import { SEARCH_MAX, type InventoryItem, type InventoryPage } from "@/lib/inventory";
 import { apiFetch, isAbortError } from "@/lib/api-client";
@@ -90,6 +91,8 @@ function InventoryList() {
   const controller = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [layout, setLayout] = useState<InventoryLayout>("grid");
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const stopSharing = useCallback(() => setSharingId(null), []);
 
   // Read after mount: the server render can't see localStorage (avoids a hydration mismatch).
   useEffect(() => setLayout(readLayout()), []);
@@ -256,7 +259,7 @@ function InventoryList() {
           <ul className={listClass(layout)}>
             {items.map((item) => (
               <li key={item.id} className="grid">
-                <InventoryCard item={item} layout={layout} />
+                <InventoryCard item={item} layout={layout} onShare={(it) => setSharingId(it.id)} />
               </li>
             ))}
           </ul>
@@ -275,6 +278,7 @@ function InventoryList() {
           )}
         </>
       )}
+      {sharingId && <ItemShareSheet itemId={sharingId} onClose={stopSharing} />}
     </div>
   );
 }

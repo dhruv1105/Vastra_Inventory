@@ -290,7 +290,9 @@ export default function ShareSheet({ open, onClose, item, templateId }: Props) {
               ? item && photoCount > 0
                 ? "Pick WhatsApp or Instagram in the share menu. The caption is copied too, for Instagram."
                 : "Pick WhatsApp, Instagram or another app in the share menu."
-              : "This browser has no share menu: copy the caption, download the photos, or open WhatsApp."
+              : item && photoCount > 0
+                ? "This browser has no share menu: copy the caption, download the photos, or open WhatsApp."
+                : "This browser has no share menu: copy the caption or open WhatsApp."
         }
         onChange={(e) => {
           setText(e.target.value);

@@ -16,6 +16,7 @@ import type { LookupDraft } from "@/components/lookups/LookupEditor";
 import { byName, LISTS, type ListKey } from "@/components/lookups/lists";
 import { apiFetch } from "@/lib/api-client";
 import CaptionsPanel from "@/components/captions/CaptionsPanel";
+import ShareSheet from "@/components/share/ShareSheet";
 import type { LookupItem } from "@/types";
 
 type Data = Record<ListKey, LookupItem[]>;
@@ -35,6 +36,7 @@ export default function ManageListsPage() {
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<LookupItem | null>(null);
+  const [sharing, setSharing] = useState<string | null>(null);
 
   const onCaptions = tab === CAPTIONS;
   // On the Captions tab `list` is unused; the lookup handlers below only run on lookup tabs.
@@ -134,7 +136,7 @@ export default function ManageListsPage() {
         />
 
         <div id={`lists-panel-${tab}`} role="tabpanel" aria-labelledby={`lists-tab-${tab}`} className="grid gap-3">
-          {onCaptions && <CaptionsPanel />}
+          {onCaptions && <CaptionsPanel onShare={(t) => setSharing(t.id)} />}
 
           {!onCaptions && status === "loading" && <SkeletonRows rows={6} label={`Loading ${list.label.toLowerCase()}`} />}
 
@@ -185,6 +187,8 @@ export default function ManageListsPage() {
           )}
         </div>
       </div>
+
+      <ShareSheet open={!!sharing} onClose={() => setSharing(null)} item={null} templateId={sharing ?? undefined} />
 
       <ConfirmDialog
         open={!!toDelete}
