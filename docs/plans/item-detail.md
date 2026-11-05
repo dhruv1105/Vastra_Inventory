@@ -1,6 +1,6 @@
 # Item detail + edit: brief and plan
 
-Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `feat/item-detail` (from `main`)
+Status: **Done 2026-11-05** (approved 2026-10-18 with answers below) · Branch: `feat/item-detail` (from `main`) · Result: [acceptance](#acceptance-result)
 
 ## Brief
 
@@ -279,3 +279,44 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   and Reload, which asks first. A kept draft (session ended) carries the version it was based on.
   `useItem` + `ItemUnavailable` are shared by the detail and edit pages. Checked in the browser end to
   end (owner, seller, conflict, one-of-a-kind turn-off, photos); 7 unit tests for the edit form logic.
+- **Step 9 done (2026-11-05).** Final sweep in a browser: item detail (items 1 and 2), edit (items 3 and
+  2) and Add Item at 390×844, 844×390, 768×1024 and 1366×768, light and dark, owner and seller (80
+  page loads): no horizontal scroll, no machine words, no cost for sellers, no console errors. Small
+  controls (back link, photo/colour remove, the price toggle) got invisible 44 px tap areas. Docs:
+  CLAUDE.md, roadmap (step 2 done, sharing next), brief. Production build passes; 269 tests + 28
+  Postgres tests.
+
+## Acceptance result
+
+| # | Result | Notes |
+|---|---|---|
+| D1 | Met | Cover first, thumbnails switch; wear type as "Top + Bottom" |
+| D2 | Met | "some sizes from ₹X"; cost and margin owner only; route + 3777.77 leak tests |
+| D3 | Met | Grid with total and Low stock; one of a kind and "No stock added" in words |
+| D4 | Met | "Added by … · 3 days ago", IST date after a week, exact time on hover |
+| D5 | Met | Edit + ⋯ by role (server 403 for sellers); Share and Mark sold disabled with reasons |
+| D6 | Met | Skeleton, "This item isn't here" (deleted / unknown / malformed), Archived badge. The load-error screen (Try again) was not forced in a browser |
+| D7 | Met | Sold out when no stock; 409 check; `item.restored` logged |
+| E1 | Partly met | Everything listed is editable; cost price owner-only. Per-variant **cost overrides** are kept on save but have no field in the form (Add Item never had one either) |
+| E2 | Met | Read-only stock, new variants at 0 with the ledger note; server ignores quantities |
+| E3 | Met | Refused next to the chips and by the server (400), naming sizes/colours and pieces |
+| E4 | Met | "Turn off one of a kind" asks for the colour; server refuses additions and turning it on |
+| E5 | Met | Version exact (microseconds, opaque string); 409 warning box keeps input; Reload asks first; status actions use the same check |
+| E6 | Met | Seller cost fields ignored, stored values kept (route + Postgres tests, browser) |
+| E7 | Met | One set of checks for Add Item and edit (`lib/item-input.ts`) |
+| E8 | Met | Sizes normalised; live duplicate 400; removed size can be re-added (migration 0005) |
+| B1 | Met | before/after with names, variant and photo summaries, cost included |
+| B6 | Met | Only `lib/activity.ts` reads `activity_log` (guard test); sellers never see cost |
+| B2 | Met | Every write bumps `updated_at`/`updated_by` |
+| B3 | Met | 401 / login, 403 by role; edits never change `variants.quantity` |
+| B4 | Met | Four sizes, light and dark, ≥ 44 px targets, `apiFetch` on every item screen |
+| B5 | Met | Dev samples: draft, sold out, one of a kind (in stock and sold), no stock, overrides, no photo, no type, long title, archived |
+
+**Not verified:** a real phone (only browser emulation at phone sizes); the Docker stack
+(`./scripts/dev-up.sh`) — migrations 0005–0007 and the dev seeds were applied to a local Postgres 16;
+`docs/screens.pdf` was not regenerated with the new screens.
+
+**Beyond the plan (asked for during the work):** sizes as chips and one colour picker; colour
+combinations (migration 0006); colours in the design (migration 0007); Add Item keeps typed input
+when the session ends; dropdowns above the save bar; toasts visible again (Tailwind now scans
+`context/`).
