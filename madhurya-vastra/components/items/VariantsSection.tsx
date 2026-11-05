@@ -15,6 +15,7 @@ import { inEdit, variantKey, type EditBase, type Errors } from "./form";
 import ColorPicker from "./ColorPicker";
 import ColorChip from "./ColorChip";
 import { SIZE_CHOICES, normalizeSize, orderSizes, sizeKey } from "@/lib/sizes";
+import { HIT_AREA_ROW } from "@/components/ui/hitArea";
 
 type Props = {
   form: ItemFormData;
@@ -359,7 +360,7 @@ export default function VariantsSection({ form, set, colors, errors, number, edi
                   type="button"
                   aria-expanded={showPrices}
                   onClick={() => setShowPrices((o) => !o)}
-                  className="flex items-center gap-1.5 rounded-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft"
+                  className={cn("relative flex items-center gap-1.5 rounded-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft", HIT_AREA_ROW)}
                 >
                   <ChevronDown aria-hidden="true" className={cn("h-4 w-4 transition-transform duration-base", !showPrices && "-rotate-90")} />
                   Different price for some variants?

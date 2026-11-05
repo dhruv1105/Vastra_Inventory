@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Vine } from "./Brand";
+import { HIT_AREA_ROW } from "./hitArea";
 
 export type PageHeaderProps = {
   title: string;
@@ -28,7 +29,10 @@ export default function PageHeader({ title, eyebrow, subtitle, action, back, tit
     <div className={cn("flex flex-wrap items-end justify-between gap-3 short:items-center", className)}>
       <div className="grid min-w-0 gap-0.5">
         {back && (
-          <Link href={back.href} className="mb-1 short:mb-0 inline-flex w-fit items-center gap-1 rounded-sm text-sm text-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft">
+          <Link
+            href={back.href}
+            className={cn("relative mb-1 short:mb-0 inline-flex w-fit items-center gap-1 rounded-sm text-sm text-muted hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft", HIT_AREA_ROW)}
+          >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" />
             {back.label}
           </Link>
