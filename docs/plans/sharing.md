@@ -1,6 +1,6 @@
 # Caption templates + sharing: brief and plan
 
-Status: **Draft v2 — all questions answered (A, B agreed 2026-11-05); waiting for go-ahead to build** · Branch: `feat/sharing`
+Status: **Draft v2 — all questions answered (A, B agreed 2026-11-05); approved 2026-11-05, building** · Branch: `feat/sharing`
 (from `main`) · Roadmap step 3
 
 ## Owner's answers (2026-11-05)
@@ -132,6 +132,9 @@ roadmap step after hosting.
 - Inventory card: share icon button (`aria-label="Share <title>"`), active items only.
 
 ### Steps (one commit each)
+
+Progress: step 1 done (`lib/caption.ts`, 19 unit tests). Next: step 2.
+
 1. **Caption builder** — `lib/caption.ts` + unit tests (no UI yet).
 2. **Templates DB + API** — migration 0008, seed, routes, route + Postgres tests.
 3. **Captions tab** on Manage Lists — both groups, editor, preview; screenshots.
