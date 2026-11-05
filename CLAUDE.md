@@ -124,7 +124,7 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before mark as sold.
-- **Tests cover API routes, helpers, middleware, paging and session checks** (269 Vitest tests + 28
+- **Tests cover API routes, helpers, middleware, paging and session checks** (272 Vitest tests + 28
   Postgres tests via `npm run test:db`); no UI tests yet (screens are checked in a browser). Older
   screens (Staff, Manage Lists) still use their own fetch helpers; move them to `apiFetch` when they
   are next changed.

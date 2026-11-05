@@ -295,9 +295,9 @@ Status: **Done 2026-11-05** (approved 2026-10-18 with answers below) · Branch: 
 | D3 | Met | Grid with total and Low stock; one of a kind and "No stock added" in words |
 | D4 | Met | "Added by … · 3 days ago", IST date after a week, exact time on hover |
 | D5 | Met | Edit + ⋯ by role (server 403 for sellers); Share and Mark sold disabled with reasons |
-| D6 | Met | Skeleton, "This item isn't here" (deleted / unknown / malformed), Archived badge. The load-error screen (Try again) was not forced in a browser |
+| D6 | Met | Skeleton, "This item isn't here" (deleted / unknown / malformed), Archived badge; "Couldn't load this item" + Try again checked in a browser on detail and edit (server error and no network) |
 | D7 | Met | Sold out when no stock; 409 check; `item.restored` logged |
-| E1 | Partly met | Everything listed is editable; cost price owner-only. Per-variant **cost overrides** are kept on save but have no field in the form (Add Item never had one either) |
+| E1 | Met | Everything listed is editable. Owner only: cost price, and cost price per size × colour (a "Cost price · staff only" grid under the per-variant selling prices, in Add Item and edit, 2026-11-05) |
 | E2 | Met | Read-only stock, new variants at 0 with the ledger note; server ignores quantities |
 | E3 | Met | Refused next to the chips and by the server (400), naming sizes/colours and pieces |
 | E4 | Met | "Turn off one of a kind" asks for the colour; server refuses additions and turning it on |
@@ -312,9 +312,17 @@ Status: **Done 2026-11-05** (approved 2026-10-18 with answers below) · Branch: 
 | B4 | Met | Four sizes, light and dark, ≥ 44 px targets, `apiFetch` on every item screen |
 | B5 | Met | Dev samples: draft, sold out, one of a kind (in stock and sold), no stock, overrides, no photo, no type, long title, archived |
 
-**Not verified:** a real phone (only browser emulation at phone sizes); the Docker stack
-(`./scripts/dev-up.sh`) — migrations 0005–0007 and the dev seeds were applied to a local Postgres 16;
-`docs/screens.pdf` was not regenerated with the new screens.
+**Not verified:** a real phone (only browser emulation at phone sizes). The Docker stack only in
+part: `./scripts/dev-up.sh` built the images and started a healthy Postgres, but in the build sandbox
+the app container could not reach the npm registry (the sandbox proxy is not reachable from
+containers), so migrations 0005–0007 ran on a local Postgres 16 instead, not inside Docker.
+**Found:** when npm fails that way it still exits 0 ("Exit handler never called"), so
+`scripts/dev-entrypoint.sh` records the lock hash and later starts skip the install; the Docker build
+likewise succeeds without packages. Not changed here — worth a guard (e.g. check `node_modules/pg`)
+when the dev stack is next touched.
+
+`docs/screens.pdf` regenerated 2026-11-05: 14 screens (new: Item detail, a draft item, Edit item,
+"someone else saved first", Staff) × light and dark × the four sizes.
 
 **Beyond the plan (asked for during the work):** sizes as chips and one colour picker; colour
 combinations (migration 0006); colours in the design (migration 0007); Add Item keeps typed input
