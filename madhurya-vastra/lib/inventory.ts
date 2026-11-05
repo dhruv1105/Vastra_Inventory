@@ -37,8 +37,8 @@ export type InventoryItem = {
 
 export type InventoryPage = { items: InventoryItem[]; nextCursor: string | null };
 
-/** Badge text by status. Active is the normal case and gets no badge. */
-export const STATUS_BADGE: Partial<Record<ItemStatus, string>> = { draft: "Draft", sold_out: "Sold out" };
+/** Badge text by status. Active is the normal case and gets no badge. (The list never shows archived items; their page does.) */
+export const STATUS_BADGE: Partial<Record<ItemStatus, string>> = { draft: "Draft", sold_out: "Sold out", archived: "Archived" };
 
 /**
  * Low stock is a prompt to restock live, countable stock — so never for drafts, sold-out items,

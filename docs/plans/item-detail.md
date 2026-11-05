@@ -251,3 +251,20 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   Manage Lists. (3b) "Colours in the design" on items (migration 0007, `item_colors`; ≤ 10): describes
   how every piece looks, separate from the stock colours; in Classify, POST/PATCH/GET, and the edit
   history by name. Checked at the four sizes, light and dark.
+- **Session ending mid-form (2026-11-05).** `apiFetch` lets a screen keep its input before a 401 sends
+  the browser to sign-in (`onBeforeLoginRedirect`, waited ≤ 1.5 s). Add Item keeps the whole form,
+  photos included, in IndexedDB (`lib/form-draft.ts`) and restores it after signing in: once, same
+  person only, within a day. Checked in the browser (expired session → sign in → everything back;
+  another person → empty form).
+- **Step 7 done (2026-11-05).** `/items/[id]`: gallery (cover first, thumbnails), price with "some sizes
+  from ₹X", cost and margin for the owner (exact, in paise; `lib/format.ts margin()` now also feeds Add
+  Item), read-only stock grid (`lib/stock.ts`; holes shown dashed, per-variant prices under the number,
+  Low stock), one-of-a-kind and "no stock" in words, details (type, wear type label, description,
+  occasions, tags, colours in the design), "Added by … · 3 days ago" in IST (`timeAgo`). Edit (primary)
+  and the ⋯ menu (Publish; owner: Archive, Restore, Delete draft, confirmed), each sending the version; a
+  409 shows the plain message with Reload. Share and Mark sold are disabled, each with its reason.
+  Phones show the item name (`PageHeader titleOnPhone`) and a fixed-height photo so stock is close.
+  Dev seed `030_item_detail_samples.sql` adds photos, description, lists, cost and design colours.
+  Checked at the four sizes, light and dark, owner and seller, on every sample state; actions run end
+  to end in the browser. **Found on the way:** toasts never showed on screen (Tailwind didn't scan
+  `context/`), fixed in its own commit.

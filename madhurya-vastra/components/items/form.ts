@@ -1,5 +1,6 @@
 import type { ItemFormData, VariantInput, WearType } from "@/types";
 import { ONE_SIZE } from "@/lib/inventory";
+import { margin as marginOf } from "@/lib/format";
 
 export const TITLE_MAX = 150;
 export const DESC_MAX = 500;
@@ -84,12 +85,11 @@ export function sectionDone(form: ItemFormData): Record<SectionKey, boolean> {
   };
 }
 
+/** The price section's margin; the maths is lib/format.ts margin() (exact, in paise). */
 export function margin(form: ItemFormData): { diff: number; pct: number } | null {
   const cost = num(form.costPrice);
-  const sell = num(form.sellingPrice);
-  if (!(sell > 0) || !(cost > 0)) return null;
-  const diff = sell - cost;
-  return { diff, pct: (diff / sell) * 100 };
+  const m = cost > 0 ? marginOf(num(form.sellingPrice), cost) : null;
+  return m && { diff: m.rupees, pct: m.percent };
 }
 
 export function buildVariants(form: ItemFormData): VariantInput[] {

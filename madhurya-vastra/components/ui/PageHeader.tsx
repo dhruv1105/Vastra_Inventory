@@ -13,6 +13,8 @@ export type PageHeaderProps = {
   action?: ReactNode;
   /** Back link, e.g. { href: "/inventory", label: "Back to inventory" }. */
   back?: { href: string; label: string };
+  /** Show the title on phones too. For a page about one record (an item): the header bar shows only the area's name. */
+  titleOnPhone?: boolean;
   className?: string;
 };
 
@@ -21,7 +23,7 @@ export type PageHeaderProps = {
  * On short screens (phone landscape, `short:` = max-height 500px) it drops the eyebrow and vine
  * and shrinks the title, so content starts higher.
  */
-export default function PageHeader({ title, eyebrow, subtitle, action, back, className }: PageHeaderProps) {
+export default function PageHeader({ title, eyebrow, subtitle, action, back, titleOnPhone, className }: PageHeaderProps) {
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-3 short:items-center", className)}>
       <div className="grid min-w-0 gap-0.5">
@@ -33,7 +35,7 @@ export default function PageHeader({ title, eyebrow, subtitle, action, back, cla
         )}
         {eyebrow && <span className="hidden text-xs font-semibold uppercase tracking-widest text-zari md:block short:hidden">{eyebrow}</span>}
         {/* On phones the header bar already shows the screen name; keep the h1 for screen readers. */}
-        <h1 className="font-display text-3xl leading-tight text-fg text-balance sr-only md:not-sr-only short:text-2xl">{title}</h1>
+        <h1 className={cn("font-display leading-tight text-fg text-balance short:text-2xl", titleOnPhone ? "text-2xl md:text-3xl" : "sr-only text-3xl md:not-sr-only")}>{title}</h1>
         {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
         <Vine className="mt-2 hidden w-44 md:block short:hidden" />
       </div>
