@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildEditPayload, editVariants, formFromItem, inEdit } from "@/components/items/form";
+import { INITIAL_FORM, buildEditPayload, buildVariants, editVariants, formFromItem, inEdit } from "@/components/items/form";
 import type { Item } from "@/types";
 
 const V = "2026-11-05 10:12:00.123456+00";
@@ -56,6 +56,29 @@ describe("editVariants", () => {
     const { form, base } = formFromItem(item({ isOneOfAKind: true, variants: [variant("One Size", null, 1, { costPriceOverride: 100 })] as Item["variants"] }));
     expect(form.sizes).toEqual([]);
     expect(editVariants(form, base)).toEqual([{ size: "One Size", colorId: null, sellingPriceOverride: null, costPriceOverride: 100 }]);
+  });
+});
+
+describe("cost price per size and colour (owner)", () => {
+  it("edit starts from the stored cost; the owner can change or clear it", () => {
+    const { form, base } = formFromItem(item());
+    expect(form.costOverrides).toEqual({ M: { peach: "2900" } });
+    const changed = editVariants({ ...form, costOverrides: { M: { peach: "", mint: "800" } } }, base);
+    expect(changed.find((v) => v.size === "M" && v.colorId === "peach")?.costPriceOverride).toBeNull();
+    expect(changed.find((v) => v.size === "M" && v.colorId === "mint")?.costPriceOverride).toBe(800);
+  });
+
+  it("a seller's form has no cost to send (the server keeps the stored one)", () => {
+    const seller = item();
+    seller.variants = seller.variants.map(({ costPriceOverride: _c, ...v }) => (void _c, v)) as Item["variants"];
+    const { form, base } = formFromItem(seller);
+    expect(form.costOverrides).toEqual({});
+    expect(editVariants(form, base).every((v) => v.costPriceOverride === null)).toBe(true);
+  });
+
+  it("Add Item sends the typed cost per variant", () => {
+    const vs = buildVariants({ ...INITIAL_FORM, sizes: ["M"], colorIds: ["red"], quantities: { M: { red: 2 } }, costOverrides: { M: { red: "1450.50" } } });
+    expect(vs).toEqual([{ size: "M", colorId: "red", quantity: 2, sellingPriceOverride: null, costPriceOverride: 1450.5 }]);
   });
 });
 

@@ -52,6 +52,8 @@ export type ItemFormData = {
   colorIds: string[]
   quantities: Record<string, Record<string, number>>
   priceOverrides: Record<string, Record<string, string>>
+  /** Owner only: cost price per size × colour, where it differs from the item's cost price. */
+  costOverrides: Record<string, Record<string, string>>
   isOneOfAKind: boolean
   status: ItemStatus
 }

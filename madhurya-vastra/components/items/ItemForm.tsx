@@ -159,7 +159,16 @@ export default function ItemForm(props: Props) {
       existing[variantKey(ONE_SIZE, colorId)] = piece;
     }
     setBase({ ...base, existing, pieceColorId: colorId });
-    setForm((f) => ({ ...f, isOneOfAKind: false, sizes: [ONE_SIZE], colorIds: [colorId], quantities: { [ONE_SIZE]: { [colorId]: piece?.quantity ?? 0 } }, priceOverrides: {} }));
+    const cost = piece?.costPriceOverride;
+    setForm((f) => ({
+      ...f,
+      isOneOfAKind: false,
+      sizes: [ONE_SIZE],
+      colorIds: [colorId],
+      quantities: { [ONE_SIZE]: { [colorId]: piece?.quantity ?? 0 } },
+      priceOverrides: {},
+      costOverrides: (cost != null ? { [ONE_SIZE]: { [colorId]: String(cost) } } : {}) as ItemFormData["costOverrides"],
+    }));
   };
 
   const saveEdit = async () => {
@@ -280,6 +289,7 @@ export default function ItemForm(props: Props) {
             set={set}
             colors={lookups.colors}
             errors={errors}
+            showCost={user?.role === "owner"}
             edit={base ? { base, onTurnOffOneOfAKind: turnOffOneOfAKind } : undefined}
           />
         </div>

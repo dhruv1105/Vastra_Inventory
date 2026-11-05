@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Palette, Plus, Unlock } from "lucide-react";
+import { ChevronDown, Lock, Palette, Plus, Unlock } from "lucide-react";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
@@ -23,6 +23,8 @@ type Props = {
   colors: LookupItem[];
   errors: Errors;
   number: number;
+  /** The owner also sets a cost price per size and colour (sellers never see cost). */
+  showCost?: boolean;
   /**
    * Edit mode: stock is read-only (it moves only through its own actions), new sizes and colours
    * start at 0, a size or colour that still has stock can't be removed, and one of a kind can only
@@ -39,7 +41,7 @@ const toQty = (raw: string) => Math.max(0, Math.min(9999, Math.floor(Number(raw.
  * Sizes (tap several chips) and colours (one picker for several), then the sizes × colours grid:
  * quantity per variant, fill helpers, optional price per variant. Laptop: choices left, grid right.
  */
-export default function VariantsSection({ form, set, colors, errors, number, edit }: Props) {
+export default function VariantsSection({ form, set, colors, errors, number, showCost, edit }: Props) {
   const [customSize, setCustomSize] = useState<string | null>(null);
   const [fillAll, setFillAll] = useState("");
   const [showPrices, setShowPrices] = useState(false);
@@ -76,10 +78,13 @@ export default function VariantsSection({ form, set, colors, errors, number, edi
     set("sizes", form.sizes.filter((s) => s !== size));
     const { [size]: _q, ...restQ } = form.quantities;
     const { [size]: _o, ...restO } = form.priceOverrides;
+    const { [size]: _c, ...restC } = form.costOverrides;
     void _q;
     void _o;
+    void _c;
     set("quantities", restQ);
     set("priceOverrides", restO);
+    set("costOverrides", restC);
   };
 
   const strip = <T,>(rec: Grid<T>, colorId: string): Grid<T> =>
@@ -95,13 +100,16 @@ export default function VariantsSection({ form, set, colors, errors, number, edi
     setBlocked(null);
     let quantities = form.quantities;
     let overrides = form.priceOverrides;
+    let costs = form.costOverrides;
     for (const id of form.colorIds.filter((c) => !ids.includes(c))) {
       quantities = strip(quantities, id);
       overrides = strip(overrides, id);
+      costs = strip(costs, id);
     }
     set("colorIds", ids);
     set("quantities", quantities);
     set("priceOverrides", overrides);
+    set("costOverrides", costs);
   };
   const removeColor = (id: string) => setColors(form.colorIds.filter((c) => c !== id));
 
@@ -116,8 +124,8 @@ export default function VariantsSection({ form, set, colors, errors, number, edi
   /** Fill a row or column with the "Fill all" number, or 1 when it is empty. */
   const fillValue = () => (fillAll ? toQty(fillAll) : 1);
 
-  const setOverride = (size: string, colorId: string, value: string) =>
-    set("priceOverrides", { ...form.priceOverrides, [size]: { ...form.priceOverrides[size], [colorId]: value.replace(/[^\d.]/g, "") } });
+  const setOverride = (key: "priceOverrides" | "costOverrides", size: string, colorId: string, value: string) =>
+    set(key, { ...form[key], [size]: { ...form[key][size], [colorId]: value.replace(/[^\d.]/g, "") } });
 
   const total = form.sizes.reduce((sum, s) => sum + form.colorIds.reduce((a, c) => a + (q[s]?.[c] ?? 0), 0), 0);
 
@@ -159,6 +167,43 @@ export default function VariantsSection({ form, set, colors, errors, number, edi
 
   const showOneOfAKind = !edit && (form.isOneOfAKind || (form.sizes.length === 0 && form.colorIds.length === 0));
   const cellState = (s: string, c: string) => (edit ? inEdit(edit.base, s, c) : "new");
+
+  /** The per-variant price grid: selling price for everyone, cost price for the owner. */
+  const priceTable = (key: "priceOverrides" | "costOverrides") => {
+    const selling = key === "priceOverrides";
+    const fallback = selling ? form.sellingPrice : form.costPrice;
+    return (
+      <div className="overflow-x-auto">
+        <table className="border-separate border-spacing-1.5">
+          <caption className="sr-only">{selling ? "Selling price" : "Cost price"} for each size and colour</caption>
+          {header(false)}
+          <tbody>
+            {form.sizes.map((s) => (
+              <tr key={s}>
+                {sizeCell(s, false)}
+                {form.colorIds.map((c) => (
+                  <td key={c}>
+                    {cellState(s, c) === "absent" ? (
+                      <span className="grid h-11 w-20 place-items-center rounded-sm border border-dashed border-line text-muted">—</span>
+                    ) : (
+                      <input
+                        inputMode="decimal"
+                        aria-label={`${selling ? "Price" : "Cost price"} for ${s}, ${colorById(c)?.name}`}
+                        placeholder={fallback ? `₹${fallback}` : "₹"}
+                        value={form[key][s]?.[c] ?? ""}
+                        onChange={(e) => setOverride(key, s, c, e.target.value)}
+                        className={cn(cellInput, "w-20")}
+                      />
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   /** Edit: stock shown, not typed. Stored variants show their count; new ones 0; never-existing ones —. */
   const lockedCell = (s: string, c: string) => {
@@ -368,36 +413,21 @@ export default function VariantsSection({ form, set, colors, errors, number, edi
                 </button>
                 {showPrices && (
                   <div className="mt-2 grid gap-2">
-                    <div className="overflow-x-auto">
-                      <table className="border-separate border-spacing-1.5">
-                        <caption className="sr-only">Selling price for each size and colour</caption>
-                        {header(false)}
-                        <tbody>
-                          {form.sizes.map((s) => (
-                            <tr key={s}>
-                              {sizeCell(s, false)}
-                              {form.colorIds.map((c) => (
-                                <td key={c}>
-                                  {cellState(s, c) === "absent" ? (
-                                    <span className="grid h-11 w-20 place-items-center rounded-sm border border-dashed border-line text-muted">—</span>
-                                  ) : (
-                                  <input
-                                    inputMode="decimal"
-                                    aria-label={`Price for ${s}, ${colorById(c)?.name}`}
-                                    placeholder={form.sellingPrice ? `₹${form.sellingPrice}` : "₹"}
-                                    value={form.priceOverrides[s]?.[c] ?? ""}
-                                    onChange={(e) => setOverride(s, c, e.target.value)}
-                                    className={cn(cellInput, "w-20")}
-                                  />
-                                  )}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                    {priceTable("priceOverrides")}
                     <p className="text-sm text-muted">Leave a box empty to use the selling price.</p>
+                    {showCost && (
+                      <>
+                        <p className="mt-2 flex items-center gap-2 text-sm font-semibold text-fg">
+                          Cost price
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-zari">
+                            <Lock aria-hidden="true" className="h-3 w-3" />
+                            staff only
+                          </span>
+                        </p>
+                        {priceTable("costOverrides")}
+                        <p className="text-sm text-muted">Leave a box empty to use the item’s cost price.</p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

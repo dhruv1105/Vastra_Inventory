@@ -27,6 +27,7 @@ export const INITIAL_FORM: ItemFormData = {
   colorIds: [],
   quantities: {},
   priceOverrides: {},
+  costOverrides: {},
   isOneOfAKind: false,
   status: "active",
 };
@@ -93,6 +94,12 @@ export function margin(form: ItemFormData): { diff: number; pct: number } | null
   return m && { diff: m.rupees, pct: m.percent };
 }
 
+/** A typed per-variant price: a positive number, or null for "use the item's price". */
+const overrideOf = (raw: string | undefined) => {
+  const n = raw !== undefined && raw !== "" ? num(raw) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
 export function buildVariants(form: ItemFormData): VariantInput[] {
   if (form.isOneOfAKind) {
     return [{ size: ONE_SIZE, colorId: null, quantity: 1, sellingPriceOverride: null, costPriceOverride: null }];
@@ -100,14 +107,12 @@ export function buildVariants(form: ItemFormData): VariantInput[] {
   const out: VariantInput[] = [];
   for (const size of form.sizes) {
     for (const colorId of form.colorIds) {
-      const raw = form.priceOverrides[size]?.[colorId];
-      const override = raw !== undefined && raw !== "" ? num(raw) : NaN;
       out.push({
         size,
         colorId,
         quantity: form.quantities[size]?.[colorId] ?? 0,
-        sellingPriceOverride: Number.isFinite(override) && override > 0 ? override : null,
-        costPriceOverride: null,
+        sellingPriceOverride: overrideOf(form.priceOverrides[size]?.[colorId]),
+        costPriceOverride: overrideOf(form.costOverrides[size]?.[colorId]), // the server drops it for sellers
       });
     }
   }
@@ -161,11 +166,14 @@ export function formFromItem(item: Item | ItemSellerView): { form: ItemFormData;
   const existing: EditBase["existing"] = {};
   const quantities: ItemFormData["quantities"] = {};
   const priceOverrides: ItemFormData["priceOverrides"] = {};
+  const costOverrides: ItemFormData["costOverrides"] = {};
   for (const v of item.variants) {
     const c = v.colorId ?? NO_COLOUR;
     existing[variantKey(v.size, v.colorId)] = { quantity: v.quantity, costPriceOverride: "costPriceOverride" in v ? v.costPriceOverride ?? null : null };
     quantities[v.size] = { ...quantities[v.size], [c]: v.quantity };
     if (v.sellingPriceOverride != null) priceOverrides[v.size] = { ...priceOverrides[v.size], [c]: String(v.sellingPriceOverride) };
+    // Sellers never receive costPriceOverride, so their form starts (and stays) without it.
+    if ("costPriceOverride" in v && v.costPriceOverride != null) costOverrides[v.size] = { ...costOverrides[v.size], [c]: String(v.costPriceOverride) };
   }
   const grid = !item.isOneOfAKind;
   return {
@@ -184,6 +192,7 @@ export function formFromItem(item: Item | ItemSellerView): { form: ItemFormData;
       colorIds: grid ? Array.from(new Set(item.variants.map((v) => v.colorId ?? NO_COLOUR))) : [],
       quantities: grid ? quantities : {},
       priceOverrides: grid ? priceOverrides : {},
+      costOverrides: grid ? costOverrides : {},
       isOneOfAKind: item.isOneOfAKind,
       status: item.status,
     },
@@ -212,14 +221,12 @@ export function editVariants(form: ItemFormData, base: EditBase) {
   for (const size of form.sizes) {
     for (const colorId of form.colorIds) {
       if (inEdit(base, size, colorId) === "absent") continue;
-      const raw = form.priceOverrides[size]?.[colorId];
-      const override = raw !== undefined && raw !== "" ? num(raw) : NaN;
       out.push({
         size,
         colorId: colorId === NO_COLOUR ? null : colorId,
-        sellingPriceOverride: Number.isFinite(override) && override > 0 ? override : null,
-        // The owner's stored cost override is sent back unchanged (the form doesn't edit it).
-        costPriceOverride: base.existing[variantKey(size, colorId)]?.costPriceOverride ?? null,
+        sellingPriceOverride: overrideOf(form.priceOverrides[size]?.[colorId]),
+        // The owner edits it in the form (filled from the stored value); the server ignores it for sellers.
+        costPriceOverride: overrideOf(form.costOverrides[size]?.[colorId]),
       });
     }
   }
