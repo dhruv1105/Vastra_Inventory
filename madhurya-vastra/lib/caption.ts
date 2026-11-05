@@ -13,6 +13,8 @@ export const TEMPLATE_NAME_MAX = 50;
 export const TEMPLATE_BODY_MAX = 1000;
 /** WhatsApp cuts a photo's caption after this many characters. */
 export const WHATSAPP_CAPTION_MAX = 1024;
+/** Photos one share can carry (WhatsApp and Instagram both take more; 8 keeps the phone fast). */
+export const MAX_SHARE_PHOTOS = 8;
 
 /** The only field a caption template may contain; shop details contain none. */
 export const TITLE_FIELD = "title";
@@ -123,4 +125,47 @@ export function buildCaption({ template, item, details, shop }: CaptionInput): s
   const head = template === null ? (item?.title.trim() ?? "") : fillTemplate(template, item);
   const parts = [head, item ? detailLines(item, details).join("\n") : "", shop === null ? "" : trimBlankLines(normalise(shop))];
   return parts.filter((p) => p.trim() !== "").join("\n\n");
+}
+
+export const TEMPLATE_KINDS: readonly TemplateKind[] = ["caption", "shop_details"];
+export const isTemplateKind = (k: unknown): k is TemplateKind => typeof k === "string" && (TEMPLATE_KINDS as readonly string[]).includes(k);
+
+/** What a template's name and text must be; the same sentences on the form and from the server. */
+export function templateProblem(kind: TemplateKind, t: { name?: unknown; body?: unknown; defaultDetails?: unknown }, partial = false): string | null {
+  if (!partial || t.name !== undefined) {
+    if (typeof t.name !== "string" || !t.name.trim()) return "Name is required";
+    if (t.name.trim().length > TEMPLATE_NAME_MAX) return `Name must be ${TEMPLATE_NAME_MAX} characters or less`;
+  }
+  if (!partial || t.body !== undefined) {
+    if (typeof t.body !== "string" || !t.body.trim()) return "Text is required";
+    if (t.body.length > TEMPLATE_BODY_MAX) return `Text must be ${TEMPLATE_BODY_MAX.toLocaleString("en-IN")} characters or less`;
+    const bad = unknownFields(t.body, kind);
+    if (bad.length) {
+      const what = bad.join(", ");
+      return kind === "caption"
+        ? `${what} ${bad.length === 1 ? "is not a field" : "are not fields"}. Only {title} can be filled in; tick details like price in the share sheet.`
+        : `Shop details can't contain fields like ${what}. Write the text as it should appear.`;
+    }
+  }
+  if (t.defaultDetails !== undefined) {
+    if (kind !== "caption" && Array.isArray(t.defaultDetails) && t.defaultDetails.length) return "Only captions can tick item details";
+    if (!Array.isArray(t.defaultDetails) || !t.defaultDetails.every(isDetailKey)) return "Unknown item detail";
+  }
+  return null;
+}
+
+/** Why an item can't be shared, or null when it can (only active items: in stock and live). */
+export function notShareableReason(status: string): string | null {
+  switch (status) {
+    case "active":
+      return null;
+    case "sold_out":
+      return "Sold out — only items in stock can be shared.";
+    case "draft":
+      return "This is a draft. Publish it before sharing.";
+    case "archived":
+      return "Archived — restore it before sharing.";
+    default:
+      return "This item can't be shared.";
+  }
 }

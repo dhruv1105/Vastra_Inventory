@@ -114,3 +114,15 @@ export type ImageDetail = {
   displayOrder: number
   altText: string | null
 }
+
+/** GET /api/caption-templates: wording for sharing (Manage Lists → Captions). */
+export type CaptionTemplate = {
+  id: string
+  kind: 'caption' | 'shop_details'
+  name: string
+  body: string
+  /** Captions only: item details (lib/caption.ts DETAIL_KEYS) that start ticked in the share sheet. */
+  defaultDetails: string[]
+  isDefault: boolean
+  updatedAt: string
+}

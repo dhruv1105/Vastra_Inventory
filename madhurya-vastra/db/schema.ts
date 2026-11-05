@@ -8,7 +8,7 @@
 // money as numeric(12,2) rupees (exact).
 
 import { sql } from "drizzle-orm";
-import { bigint, boolean, check, char, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, check, char, index, integer, jsonb, numeric, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 
 const ts = (name: string) => timestamp(name, { withTimezone: true });
 const money = (name: string) => numeric(name, { precision: 12, scale: 2 });
@@ -254,6 +254,32 @@ export const itemColors = pgTable(
     ...audit(),
   },
   (t) => [primaryKey({ columns: [t.itemId, t.colorId] }), index("item_colors_color_idx").on(t.colorId)],
+);
+
+/**
+ * Wording for sharing to WhatsApp / Instagram (Manage Lists → Captions; docs/plans/sharing.md).
+ * kind 'caption': the message text, may contain {title}; default_details = which item details
+ * (lib/caption.ts DETAIL_KEYS) start ticked in the share sheet. kind 'shop_details': the shop's
+ * name, numbers and handles, added after every caption. At most one live default per kind.
+ */
+export const captionTemplates = pgTable(
+  "caption_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull(),
+    name: varchar("name", { length: 50 }).notNull(),
+    body: text("body").notNull(),
+    defaultDetails: text("default_details").array().notNull().default(sql`'{}'::text[]`),
+    isDefault: boolean("is_default").notNull().default(false),
+    ...audit(),
+    deletedAt: ts("deleted_at"),
+  },
+  (t) => [
+    check("caption_templates_kind_check", sql`${t.kind} IN ('caption', 'shop_details')`),
+    check("caption_templates_body_check", sql`char_length(${t.body}) BETWEEN 1 AND 1000`),
+    uniqueIndex("caption_templates_live_name_unique").on(t.kind, sql`lower(${t.name})`).where(liveOnly),
+    uniqueIndex("caption_templates_live_default_unique").on(t.kind).where(sql`${t.isDefault} AND deleted_at IS NULL`),
+  ],
 );
 
 /** Append-only record of who changed what. Metadata only, no personal data. */
