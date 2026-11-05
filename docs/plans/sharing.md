@@ -133,7 +133,7 @@ roadmap step after hosting.
 
 ### Steps (one commit each)
 
-Progress: step 1 done (`lib/caption.ts`). Step 2 done (migration 0008, seed 020, routes, 30 route + 3 Postgres tests). Next: step 3.
+Progress: step 1 done (`lib/caption.ts`). Step 2 done (migration 0008, seed 020, routes, 30 route + 3 Postgres tests). Step 3 done (Captions tab; Manage Lists on apiFetch). Next: step 4.
 
 1. **Caption builder** — `lib/caption.ts` + unit tests (no UI yet).
 2. **Templates DB + API** — migration 0008, seed, routes, route + Postgres tests.

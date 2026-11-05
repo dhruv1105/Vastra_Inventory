@@ -15,24 +15,31 @@ import LookupList from "@/components/lookups/LookupList";
 import type { LookupDraft } from "@/components/lookups/LookupEditor";
 import { byName, LISTS, type ListKey } from "@/components/lookups/lists";
 import { apiFetch } from "@/lib/api-client";
+import CaptionsPanel from "@/components/captions/CaptionsPanel";
 import type { LookupItem } from "@/types";
 
 type Data = Record<ListKey, LookupItem[]>;
 const EMPTY: Data = { types: [], colors: [], occasions: [], tags: [] };
+/** Captions and shop details: a tab of its own that owner and sellers can change (docs/plans/sharing.md). */
+const CAPTIONS = "captions";
+type TabKey = ListKey | typeof CAPTIONS;
 
 export default function ManageListsPage() {
   const { user } = useAuth();
   // Sellers can look up the lists; only the owner changes them (the API enforces this too).
   const canEdit = user?.role === "owner";
   const { showToast } = useToast();
-  const [tab, setTab] = useState<ListKey>("types");
+  const [tab, setTab] = useState<TabKey>("types");
   const [data, setData] = useState<Data>(EMPTY);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<LookupItem | null>(null);
 
-  const list = LISTS.find((l) => l.key === tab)!;
+  const onCaptions = tab === CAPTIONS;
+  // On the Captions tab `list` is unused; the lookup handlers below only run on lookup tabs.
+  const list = LISTS.find((l) => l.key === tab) ?? LISTS[0];
+  const listKey = list.key;
 
   const load = useCallback(async () => {
     setStatus("loading");
@@ -50,15 +57,15 @@ export default function ManageListsPage() {
   }, [load]);
 
   const changeTab = (key: string) => {
-    setTab(key as ListKey);
+    setTab(key as TabKey);
     setQ("");
     setEditing(null);
   };
 
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return needle ? data[tab].filter((i) => i.name.toLowerCase().includes(needle)) : data[tab];
-  }, [data, tab, q]);
+    return needle ? data[listKey].filter((i) => i.name.toLowerCase().includes(needle)) : data[listKey];
+  }, [data, listKey, q]);
 
   const put = (key: ListKey, next: LookupItem[]) => setData((d) => ({ ...d, [key]: [...next].sort(byName) }));
 
@@ -67,14 +74,14 @@ export default function ManageListsPage() {
 
   const create = async (draft: LookupDraft) => {
     const item = await apiFetch<LookupItem>(`/api/lookups/${list.endpoint}`, { method: "POST", body: body(draft) });
-    put(tab, [...data[tab], item]);
+    put(listKey, [...data[listKey], item]);
     setEditing(null);
     showToast(`Added “${item.name}”`, "success");
   };
 
   const update = async (id: string, draft: LookupDraft) => {
     const item = await apiFetch<LookupItem>(`/api/lookups/${list.endpoint}/${id}`, { method: "PATCH", body: body(draft) });
-    put(tab, data[tab].map((i) => (i.id === id ? item : i)));
+    put(listKey, data[listKey].map((i) => (i.id === id ? item : i)));
     setEditing(null);
     showToast("Saved", "success");
   };
@@ -83,7 +90,7 @@ export default function ManageListsPage() {
     if (!toDelete) return;
     try {
       await apiFetch(`/api/lookups/${list.endpoint}/${toDelete.id}`, { method: "DELETE" });
-      put(tab, data[tab].filter((i) => i.id !== toDelete.id));
+      put(listKey, data[listKey].filter((i) => i.id !== toDelete.id));
       showToast(`Deleted “${toDelete.name}”`, "success");
       setToDelete(null);
     } catch (e) {
@@ -101,9 +108,15 @@ export default function ManageListsPage() {
       <PageHeader
         eyebrow="Shop settings"
         title="Manage Lists"
-        subtitle={canEdit ? "The choices staff pick from when adding an item." : "The choices staff pick from when adding an item. Only the owner can change them."}
+        subtitle={
+          onCaptions
+            ? "The wording staff use when sharing items to WhatsApp and Instagram. Everyone can change it."
+            : canEdit
+              ? "The choices staff pick from when adding an item."
+              : "The choices staff pick from when adding an item. Only the owner can change them."
+        }
         action={
-          canEdit && (
+          canEdit && !onCaptions && (
             <Button icon={<Plus />} onClick={startAdd} disabled={status !== "ready"}>
               Add {list.singular}
             </Button>
@@ -115,21 +128,23 @@ export default function ManageListsPage() {
         <Tabs
           label="Lists"
           idPrefix="lists"
-          tabs={LISTS.map((l) => ({ id: l.key, label: l.label, count: status === "ready" ? data[l.key].length : undefined }))}
+          tabs={[...LISTS.map((l) => ({ id: l.key, label: l.label, count: status === "ready" ? data[l.key].length : undefined })), { id: CAPTIONS, label: "Captions" }]}
           value={tab}
           onChange={changeTab}
         />
 
         <div id={`lists-panel-${tab}`} role="tabpanel" aria-labelledby={`lists-tab-${tab}`} className="grid gap-3">
-          {status === "loading" && <SkeletonRows rows={6} label={`Loading ${list.label.toLowerCase()}`} />}
+          {onCaptions && <CaptionsPanel />}
 
-          {status === "error" && (
+          {!onCaptions && status === "loading" && <SkeletonRows rows={6} label={`Loading ${list.label.toLowerCase()}`} />}
+
+          {!onCaptions && status === "error" && (
             <EmptyState compact title="The lists didn’t load" action={<Button variant="secondary" icon={<RotateCw />} onClick={load}>Try again</Button>}>
               The server could not be reached. Check that the app is running, then try again.
             </EmptyState>
           )}
 
-          {status === "ready" && (
+          {!onCaptions && status === "ready" && (
             <>
               <Input
                 type="search"
@@ -154,7 +169,7 @@ export default function ManageListsPage() {
                     readOnly={!canEdit}
                   />
                   <p className="text-sm text-muted" aria-live="polite">
-                    {q.trim() ? `${shown.length} of ${data[tab].length} ${list.label.toLowerCase()}` : `${data[tab].length} ${list.label.toLowerCase()}`}
+                    {q.trim() ? `${shown.length} of ${data[listKey].length} ${list.label.toLowerCase()}` : `${data[listKey].length} ${list.label.toLowerCase()}`}
                   </p>
                 </>
               ) : q.trim() ? (
