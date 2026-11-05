@@ -29,6 +29,7 @@ app needs to start (lookup lists) goes in `db/seeds/*.sql`, written to be safe t
 | `item_types`, `colors` (`hex_code`), `occasions`, `tags` | `id`, `name` unique | lookups; soft delete via `deleted_at` |
 | `item_occasions`, `item_tags` | `item_id`, `occasion_id`/`tag_id` | many-to-many |
 | `activity_log` | `actor_id`, `action` (`item.created`), `entity_type`, `entity_id`, `payload` json | append-only |
+| `caption_templates` | `id`, `kind` (`caption`/`shop_details`), `name` (≤50), `body` (≤1,000), `default_details` text[], `is_default` | sharing wording (Manage Lists → Captions); one live default per kind; names unique per kind; soft delete. Builder: `lib/caption.ts` |
 
 Every table carries `created_by`, `created_at`, `updated_by`, `updated_at`; lookups also
 `deleted_at`. Ids are `gen_random_uuid()`.

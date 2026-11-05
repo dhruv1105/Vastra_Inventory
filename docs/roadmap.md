@@ -6,17 +6,17 @@ short and current.
 ## Phase 1 order (agreed with the owner, 2026-10-18)
 
 Done: UI redesign (R0–R6), real authentication (A1–A6), inventory list (step 1), item detail +
-edit (step 2).
+edit (step 2), caption templates + sharing (step 3).
 
 1. ~~**Inventory list**~~ — done 2026-10-18 ([plans/inventory-list.md](plans/inventory-list.md)).
 2. ~~**Item detail / edit**~~ — done 2026-11-05 ([plans/item-detail.md](plans/item-detail.md)):
    `/items/[id]` and `/items/[id]/edit`, publish / archive / restore / delete, concurrency check,
    history in `activity_log`, colour combinations and colours in the design.
-3. **Caption templates + sharing** — build a caption from the item (`items.caption_text`) and
-   share photos + caption to **WhatsApp and Instagram**. **Mandatory in phase 1.** ← *current step*
-   (The item page already shows a disabled Share button waiting for it.) Uses the phone's share
-   menu only — no Meta API (decided 2026-11-05; see step 6).
-4. **Set up CI** — GitHub Actions on every pull request and push to `main`: lint, typecheck
+3. ~~**Caption templates + sharing**~~ — done 2026-11-05 ([plans/sharing.md](plans/sharing.md)):
+   captions and shop details on Manage Lists → Captions (owner and sellers), share sheet on the
+   item page and inventory cards (photos as JPEG + caption, details opt-in), text-only share of
+   generic captions. Uses the phone's share menu only — no Meta API (see step 6).
+4. **Set up CI** ← *next* — GitHub Actions on every pull request and push to `main`: lint, typecheck
    (`tsc --noEmit`), tests (`npm test`, plus the Postgres tests in a `postgres:16` service with
    `TEST_DATABASE_URL`) and `npm run build`. Branch protection: `main` merges only when it is
    green. Needed before hosting, so nothing broken gets deployed. (Not built yet.)

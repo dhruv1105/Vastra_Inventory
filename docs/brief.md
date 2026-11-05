@@ -20,15 +20,16 @@ codes; the owner adds staff on the Staff screen; owner/seller roles checked on t
 size × colour grid with price overrides, draft/active), Manage Lists (types, colours, occasions,
 tags), Inventory list (photo cards, title search, low-stock and status badges, load more), Item detail
 (photos, price, cost and margin for the owner, stock grid, publish / archive / restore / delete) and
-Item edit (Add Item's form, read-only stock, conflict warning), responsive shell (header,
+Item edit (Add Item's form, read-only stock, conflict warning), caption templates + sharing to
+WhatsApp/Instagram through the phone's share menu (captions and shop details on Manage Lists;
+Share on the item page and inventory cards), responsive shell (header,
 collapsible sidebar, bottom nav), all on the redesigned UI kit.
 
-To build, in order (see [roadmap.md](roadmap.md)): caption
-templates + sharing to WhatsApp/Instagram (mandatory in phase 1) → CI (GitHub Actions) → S3 photo
-storage + hosting →
+To build, in order (see [roadmap.md](roadmap.md)): CI (GitHub Actions) → S3 photo storage +
+hosting → Meta integrations (Instagram posting, comment auto-DMs, WhatsApp catalogue) →
 stock-movement ledger → mark as sold → dashboard + activity log.
 
-**Current step: caption templates + sharing.**
+**Current step: CI.**
 
 ## Phase 2 — customers
 

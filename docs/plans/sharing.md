@@ -1,6 +1,6 @@
 # Caption templates + sharing: brief and plan
 
-Status: **Draft v2 — all questions answered (A, B agreed 2026-11-05); approved 2026-11-05, building** · Branch: `feat/sharing`
+Status: **Done 2026-11-05** · Branch: `feat/sharing`
 (from `main`) · Roadmap step 3
 
 ## Owner's answers (2026-11-05)
@@ -133,7 +133,7 @@ roadmap step after hosting.
 
 ### Steps (one commit each)
 
-Progress: step 1 done (`lib/caption.ts`). Step 2 done (migration 0008, seed 020, routes, 30 route + 3 Postgres tests). Step 3 done (Captions tab; Manage Lists on apiFetch). Step 4 done (share sheet on the item page). Step 5 done (share from inventory cards; text-only share on the Captions tab). Next: step 6 (verify + docs).
+Progress: step 1 done (`lib/caption.ts`). Step 2 done (migration 0008, seed 020, routes, 30 route + 3 Postgres tests). Step 3 done (Captions tab; Manage Lists on apiFetch). Step 4 done (share sheet on the item page). Step 5 done (share from inventory cards; text-only share on the Captions tab). Step 6 done (verified; docs updated). **Roadmap step 3 complete.**
 
 1. **Caption builder** — `lib/caption.ts` + unit tests (no UI yet).
 2. **Templates DB + API** — migration 0008, seed, routes, route + Postgres tests.
@@ -166,3 +166,22 @@ Researched 2026-11-05 from Meta's developer docs and guides; re-check before bui
 
 Not possible by any allowed route: posting WhatsApp Status or Channel updates, sending a first DM
 to someone who never messaged, browser automation of Instagram (against its terms).
+
+## Acceptance (2026-11-05)
+
+| # | Result | How checked |
+|---|---|---|
+| T1 | Met | Captions tab with two groups, add / change / make default / delete (ConfirmDialog); both roles allowed (route tests); every change logged |
+| T2 | Met | Name ≤ 50, text ≤ 1,000, only `{title}` in captions, no fields in shop details, unknown fields refused with a sentence (route tests; browser: `{prise}`) |
+| T3 | Met | Live preview with a sample item and the default shop details (browser) |
+| T4 | Met | Seed 020: three captions + one shop-details block, one default each; re-run changes nothing (Postgres test). Shop details hold only the name, tagline and Instagram handle — the owner adds phone, address and links |
+| T5 | Met | One live default per kind (partial unique index, Postgres test); deleting the default leaves none; sheet falls back to the first; none at all → item name |
+| C1–C5 | Met | Unit tests (`tests/lib/caption.test.ts`) |
+| S1 | Met | Share on the item page and inventory cards for active items; disabled with the reason otherwise (route 409 tests; browser) |
+| S2 | Met | Pickers, detail chips, photo tick-grid (max 8, cover first), editable message with a 1,024 warning under photos (browser) |
+| S3 | Met in a stand-in | Share menu faked in the browser: received 2 JPEG files + caption; caption copied; logged `photos: 2`. **Real WhatsApp / Instagram on a phone: not verified** |
+| S4 | Met | Copy caption, Download photos, Open WhatsApp (browser without a share menu) |
+| S5 | Met | No photos → text only (code path; same as the text-only share) |
+| S6 / S7 | Met | `item.shared` `{ template, photos }`, `caption.shared` `{ template }`, never the text (route tests; checked in the database) |
+| B1 | Met for the owner; **seller not verified in a browser** | Owner: 390×844, 844×390, 768×1024, 1366×768, light and dark — no horizontal scroll, no overlap, no console errors; small buttons made full size. No seller account exists in dev; seller access is covered by route tests. Kit chips are 36 px tall (shared `Chip`, also on Add Item) — left as is, reported |
+| B2 | Met | 325 Vitest + 31 Postgres tests pass |

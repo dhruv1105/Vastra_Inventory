@@ -54,6 +54,8 @@ return 404/403 unless `NODE_ENV === "development"` (see `app/kit/page.tsx`).
 | POST items | ✓ (cost prices dropped) | ✓ |
 | /api/staff, /api/staff/[id] (add, reset password, role, turn off/on) | 403 | ✓ |
 | /api/account/password (own password; allowed while a new one is pending) | ✓ | ✓ |
+| /api/caption-templates (GET, POST, PATCH, DELETE, [id]/share) | ✓ (owner's answer, 2026-11-05) | ✓ |
+| POST /api/items/[id]/share (logs `item.shared`; 409 unless active) | ✓ | ✓ |
 | /api/auth/admin/* (better-auth, called by /api/staff) | 403 | ✓ |
 
 Lookup routes share `lib/lookups.ts` — add a list by binding a config, not by copying a route.

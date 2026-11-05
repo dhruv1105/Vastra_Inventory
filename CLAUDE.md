@@ -18,7 +18,9 @@ The UI redesign (R0–R6) is done: every screen uses the shared kit in `componen
 Real authentication is done (better-auth, A1–A6 — [docs/plans/auth.md](docs/plans/auth.md)).
 The inventory list is done ([docs/plans/inventory-list.md](docs/plans/inventory-list.md)).
 Item detail + edit is done ([docs/plans/item-detail.md](docs/plans/item-detail.md)).
-Next, per the [roadmap](docs/roadmap.md): caption templates + sharing to WhatsApp/Instagram.
+Caption templates + sharing is done ([docs/plans/sharing.md](docs/plans/sharing.md)): the phone's share
+menu only — automatic Instagram/WhatsApp (Meta APIs) is roadmap step 6, after hosting.
+Next, per the [roadmap](docs/roadmap.md): CI (GitHub Actions).
 
 Full brief: [docs/brief.md](docs/brief.md).
 
@@ -54,8 +56,8 @@ Vastra_Inventory/            git root
   .claude/                   rules, skills, agents, commands
   madhurya-vastra/           THE Next.js app — run every npm command from here
     app/(auth)/              login
-    app/(protected)/         staff screens: inventory, items/new, items/[id] (detail), items/[id]/edit, manage-lists, staff, sales, dashboard
-    app/api/                 route handlers (auth/[...all], account/password, staff, items, lookups/*, health)
+    app/(protected)/         staff screens: inventory, items/new, items/[id] (detail), items/[id]/edit, manage-lists (+ Captions tab), staff, sales, dashboard
+    app/api/                 route handlers (auth/[...all], account/password, staff, items (+ [id]/share), lookups/*, caption-templates, health)
     tests/                   Vitest: api/ route tests, lib/ unit tests, db/ Postgres tests (npm run test:db)
     app/kit/                 dev-only preview of the shared kit (404 in production)
     db/                      Drizzle schema.ts, generated migrations/, re-runnable SQL seeds/ (seeds/dev = sample items)
@@ -64,6 +66,8 @@ Vastra_Inventory/            git root
     components/items/        ItemForm (Add Item + edit) and its sections, ColorPicker; detail/ (gallery, stock grid, actions)
     components/inventory/    Inventory list: InventoryCard (phone grid / list, tablet+ card), InventorySkeleton
     components/lookups/      LookupList (Manage Lists)
+    components/captions/     Captions tab: CaptionsPanel, CaptionTemplates, CaptionEditor
+    components/share/        ShareSheet (item or text-only), ItemShareSheet (loads by id, for the list)
     lib/theme/               theme config → CSS variables (colours, fonts, radius, motion)
     public/brand/            real logo, mark, vine, app icons (cut from assets/)
     public/dev-samples/      placeholder fabric photos used by the dev sample items
@@ -124,10 +128,9 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 - **Photos on local disk** (`public/uploads`, a Docker volume). Planned: one storage helper —
   disk in development, S3 in production — before hosting.
 - **Stock is a mutable `variants.quantity`.** Planned: stock-movement ledger before mark as sold.
-- **Tests cover API routes, helpers, middleware, paging and session checks** (272 Vitest tests + 28
-  Postgres tests via `npm run test:db`); no UI tests yet (screens are checked in a browser). Older
-  screens (Staff, Manage Lists) still use their own fetch helpers; move them to `apiFetch` when they
-  are next changed.
+- **Tests cover API routes, helpers, middleware, paging and session checks** (325 Vitest tests + 31
+  Postgres tests via `npm run test:db`); no UI tests yet (screens are checked in a browser). The Staff
+  screen still uses its own fetch helper; move it to `apiFetch` when it is next changed.
 - **Removed photos keep their files on disk** (soft-deleted rows). Cleaning them up is part of the
   S3 step.
 
@@ -144,6 +147,7 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 | Colours in the design | How every piece of an item looks (`item_colors`), e.g. red with a gold border — not stock; stock colours are per variant |
 | Owner / Seller | The two staff roles |
 | One-of-a-kind | Item with no variants (single piece) |
+| Caption / Shop details | Sharing wording (`caption_templates.kind`): a caption is the message (may use `{title}`); shop details are added at the end of every message |
 
 ## Skills — load the ones your task needs
 
