@@ -8,6 +8,8 @@ const config: Config = {
   content: [
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    // The toast host renders its own markup (context/ToastContext.tsx).
+    "./context/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
