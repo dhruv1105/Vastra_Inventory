@@ -15,11 +15,14 @@ export type ApiResponse<T> = {
 export type WearType = 'top' | 'bottom' | 'both'
 export type ItemStatus = 'active' | 'draft' | 'sold_out' | 'archived'
 
+/** A photo in the item form: a new file (file + base64), or one already saved (existingId, preview = its URL). */
 export type ImageFile = {
   id: string
-  file: File
+  file?: File
   preview: string
-  base64: string
+  base64?: string
+  /** Set for a photo already saved on the item (edit). */
+  existingId?: string
   mimeType: string
   displayOrder: number
   altText: string | null

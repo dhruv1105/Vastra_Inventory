@@ -268,3 +268,14 @@ Status: **Approved 2026-10-18 with answers** (below) · building · Branch: `fea
   Checked at the four sizes, light and dark, owner and seller, on every sample state; actions run end
   to end in the browser. **Found on the way:** toasts never showed on screen (Tailwind didn't scan
   `context/`), fixed in its own commit.
+- **Step 8 done (2026-11-05).** `/items/[id]/edit` renders the shared `ItemForm` in edit mode, filled from
+  the item (`formFromItem`). Stock is read-only; a new size or colour brings its variants at 0 ("new"),
+  and a size × colour that never existed between existing ones stays absent ("—") instead of being
+  created silently (`inEdit`/`editVariants`). Removing a size or colour that still has stock is refused
+  next to the chips, saying how many pieces. One of a kind can only be turned off, choosing the piece's
+  colour (same row and stock). Saved photos are kept/reordered/removed, new ones added (`images.keep/add`).
+  The owner's stored cost overrides are sent back unchanged; sellers see no cost field. A stale save
+  (409) shows a warning box at the top, keeps everything typed, offers "See their version" (new tab)
+  and Reload, which asks first. A kept draft (session ended) carries the version it was based on.
+  `useItem` + `ItemUnavailable` are shared by the detail and edit pages. Checked in the browser end to
+  end (owner, seller, conflict, one-of-a-kind turn-off, photos); 7 unit tests for the edit form logic.

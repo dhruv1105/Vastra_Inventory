@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, Palette, Plus } from "lucide-react";
+import { ChevronDown, Palette, Plus, Unlock } from "lucide-react";
 import Section from "@/components/ui/Section";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
 import Swatch from "@/components/ui/Swatch";
 import { Chip } from "@/components/ui/Chip";
-import { Input } from "@/components/ui/Input";
+import Dialog from "@/components/ui/Dialog";
+import { Input, SelectField } from "@/components/ui/Input";
 import { cn } from "@/lib/cn";
 import type { ItemFormData, LookupItem } from "@/types";
-import type { Errors } from "./form";
+import { inEdit, variantKey, type EditBase, type Errors } from "./form";
 import ColorPicker from "./ColorPicker";
 import ColorChip from "./ColorChip";
 import { SIZE_CHOICES, normalizeSize, orderSizes, sizeKey } from "@/lib/sizes";
@@ -21,6 +22,12 @@ type Props = {
   colors: LookupItem[];
   errors: Errors;
   number: number;
+  /**
+   * Edit mode: stock is read-only (it moves only through its own actions), new sizes and colours
+   * start at 0, a size or colour that still has stock can't be removed, and one of a kind can only
+   * be turned off (giving the piece a colour).
+   */
+  edit?: { base: EditBase; onTurnOffOneOfAKind: (colorId: string) => void };
 };
 
 type Grid<T> = Record<string, Record<string, T>>;
@@ -31,11 +38,20 @@ const toQty = (raw: string) => Math.max(0, Math.min(9999, Math.floor(Number(raw.
  * Sizes (tap several chips) and colours (one picker for several), then the sizes × colours grid:
  * quantity per variant, fill helpers, optional price per variant. Laptop: choices left, grid right.
  */
-export default function VariantsSection({ form, set, colors, errors, number }: Props) {
+export default function VariantsSection({ form, set, colors, errors, number, edit }: Props) {
   const [customSize, setCustomSize] = useState<string | null>(null);
   const [fillAll, setFillAll] = useState("");
   const [showPrices, setShowPrices] = useState(false);
   const [picking, setPicking] = useState(false);
+  /** Why the last removal was refused (edit: it still has stock). */
+  const [blocked, setBlocked] = useState<string | null>(null);
+  const [turningOff, setTurningOff] = useState(false);
+  const [pieceColour, setPieceColour] = useState("");
+
+  /** Stored stock in these sizes × colours (edit only; 0 when adding). */
+  const stockIn = (sizes: string[], colorIds: string[]) =>
+    edit ? sizes.reduce((sum, s) => sum + colorIds.reduce((a, c) => a + (edit.base.existing[variantKey(s, c)]?.quantity ?? 0), 0), 0) : 0;
+  const pieces = (n: number) => (n === 1 ? "1 piece" : `${n} pieces`);
 
   const colorById = (id: string) => colors.find((c) => c.id === id);
   const usable = form.sizes.length > 0 && form.colorIds.length > 0;
@@ -53,6 +69,9 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
   const sizeChoices = [...SIZE_CHOICES, ...form.sizes.filter((s) => !(SIZE_CHOICES as readonly string[]).includes(s))];
 
   const removeSize = (size: string) => {
+    const left = stockIn([size], form.colorIds);
+    if (left > 0) return setBlocked(`${size} still has ${pieces(left)} in stock, so it can’t be removed.`);
+    setBlocked(null);
     set("sizes", form.sizes.filter((s) => s !== size));
     const { [size]: _q, ...restQ } = form.quantities;
     const { [size]: _o, ...restO } = form.priceOverrides;
@@ -67,6 +86,12 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
 
   /** New colour choice: dropped colours lose their quantities and prices. */
   const setColors = (ids: string[]) => {
+    const stocked = form.colorIds.filter((c) => !ids.includes(c) && stockIn(form.sizes, [c]) > 0);
+    if (stocked.length) {
+      const names = stocked.map((c) => `${colorById(c)?.name ?? "No colour"} (${pieces(stockIn(form.sizes, [c]))})`).join(", ");
+      return setBlocked(`These colours still have stock, so they can’t be removed: ${names}.`);
+    }
+    setBlocked(null);
     let quantities = form.quantities;
     let overrides = form.priceOverrides;
     for (const id of form.colorIds.filter((c) => !ids.includes(c))) {
@@ -104,7 +129,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
             <span className="grid min-w-16 justify-items-center gap-1">
               <Swatch hex={colorById(c)?.hexCode} hex2={colorById(c)?.hexCode2} />
               <span className="max-w-20 truncate text-fg">{colorById(c)?.name ?? "—"}</span>
-              {withFill && (
+              {withFill && !edit && (
                 <button type="button" onClick={() => fill(form.sizes, [c], fillValue())} className="rounded-sm px-1 text-xs font-semibold text-primary hover:bg-tint">
                   Fill column
                 </button>
@@ -120,7 +145,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
     <th scope="row" className="sticky left-0 z-10 bg-surface pr-2 text-left align-middle">
       <span className="grid gap-0.5">
         <span className="font-semibold text-fg">{s}</span>
-        {withFill && (
+        {withFill && !edit && (
           <button type="button" onClick={() => fill([s], form.colorIds, fillValue())} className="w-fit rounded-sm text-xs font-semibold text-primary hover:bg-tint">
             Fill row
           </button>
@@ -131,7 +156,28 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
 
   const cellInput = "h-11 w-16 rounded-sm border border-line bg-surface text-center tabular-nums text-fg placeholder:text-muted focus:border-primary-soft focus:outline-none focus:ring-4 focus:ring-tint-strong";
 
-  const showOneOfAKind = form.isOneOfAKind || (form.sizes.length === 0 && form.colorIds.length === 0);
+  const showOneOfAKind = !edit && (form.isOneOfAKind || (form.sizes.length === 0 && form.colorIds.length === 0));
+  const cellState = (s: string, c: string) => (edit ? inEdit(edit.base, s, c) : "new");
+
+  /** Edit: stock shown, not typed. Stored variants show their count; new ones 0; never-existing ones —. */
+  const lockedCell = (s: string, c: string) => {
+    const state = cellState(s, c);
+    return (
+      <span
+        className={cn(
+          "grid h-11 w-16 place-items-center content-center rounded-sm border text-center tabular-nums",
+          state === "absent" ? "border-dashed border-line text-muted" : state === "new" ? "border-line text-muted" : "border-line bg-tint font-semibold text-fg",
+        )}
+      >
+        {state === "absent" ? (
+          <span aria-label={`${s}, ${colorById(c)?.name ?? "no colour"}: not stocked`}>—</span>
+        ) : (
+          <span aria-label={`${s}, ${colorById(c)?.name ?? "no colour"}: ${q[s]?.[c] ?? 0} in stock${state === "new" ? " (new)" : ""}`}>{state === "new" ? 0 : q[s]?.[c] ?? 0}</span>
+        )}
+        {state === "new" && <span className="text-xs font-semibold text-primary">new</span>}
+      </span>
+    );
+  };
 
   return (
     <Section id="variants" title="Sizes & colours" number={number}>
@@ -141,6 +187,48 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
             <input type="checkbox" checked={form.isOneOfAKind} onChange={(e) => set("isOneOfAKind", e.target.checked)} className="h-5 w-5 accent-primary" />
             One of a kind — a single piece, no sizes or colours
           </label>
+        )}
+
+        {edit && form.isOneOfAKind && (
+          <div className="flex flex-wrap items-center gap-3 lg:col-span-3">
+            <p className="text-fg">
+              One of a kind — a single piece, {pieces(stockIn(["One Size"], [""]))} in stock. Turn this off to add sizes and colours.
+            </p>
+            <Button size="sm" variant="secondary" icon={<Unlock />} onClick={() => setTurningOff(true)}>
+              Turn off one of a kind
+            </Button>
+            <Dialog
+              open={turningOff}
+              title="Turn off one of a kind?"
+              onClose={() => setTurningOff(false)}
+              footer={
+                <>
+                  <Button variant="secondary" onClick={() => setTurningOff(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={!pieceColour}
+                    onClick={() => {
+                      edit.onTurnOffOneOfAKind(pieceColour);
+                      setTurningOff(false);
+                    }}
+                  >
+                    Turn off
+                  </Button>
+                </>
+              }
+            >
+              <p>The piece becomes a normal size and colour: One Size in the colour you choose, with the same stock. Then you can add more sizes and colours.</p>
+              <SelectField id="piece-colour" label="Colour of the piece" required value={pieceColour} onChange={(e) => setPieceColour(e.target.value)}>
+                <option value="">Choose a colour</option>
+                {colors.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </SelectField>
+            </Dialog>
+          </div>
         )}
 
         {!form.isOneOfAKind && (
@@ -196,6 +284,11 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
                 </Button>
               </div>
             </Field>
+            {blocked && (
+              <p className="text-sm text-danger" role="status">
+                {blocked}
+              </p>
+            )}
             <ColorPicker
               open={picking}
               title="Colours you have"
@@ -217,6 +310,9 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
                 <p className="font-semibold text-fg">
                   Total pieces <span className="text-lg tabular-nums text-primary">{total}</span>
                 </p>
+                {edit ? (
+                  <p className="text-sm text-muted">Stock can’t be changed here; that comes with the stock ledger. New sizes and colours start at 0.</p>
+                ) : (
                 <div className="flex items-center gap-2 text-sm text-muted">
                   <label htmlFor="fill-all">Fill every box with</label>
                   <Input id="fill-all" inputMode="numeric" placeholder="qty" value={fillAll} onChange={(e) => setFillAll(e.target.value.replace(/\D/g, ""))} className="h-9 min-h-9 w-16 text-center" />
@@ -224,6 +320,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
                     Apply
                   </Button>
                 </div>
+                )}
               </div>
 
               <div className="overflow-x-auto">
@@ -236,6 +333,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
                         {sizeCell(s, true)}
                         {form.colorIds.map((c) => {
                           const v = q[s]?.[c];
+                          if (edit) return <td key={c}>{lockedCell(s, c)}</td>;
                           return (
                             <td key={c}>
                               <input
@@ -279,6 +377,9 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
                               {sizeCell(s, false)}
                               {form.colorIds.map((c) => (
                                 <td key={c}>
+                                  {cellState(s, c) === "absent" ? (
+                                    <span className="grid h-11 w-20 place-items-center rounded-sm border border-dashed border-line text-muted">—</span>
+                                  ) : (
                                   <input
                                     inputMode="decimal"
                                     aria-label={`Price for ${s}, ${colorById(c)?.name}`}
@@ -287,6 +388,7 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
                                     onChange={(e) => setOverride(s, c, e.target.value)}
                                     className={cn(cellInput, "w-20")}
                                   />
+                                  )}
                                 </td>
                               ))}
                             </tr>
@@ -304,7 +406,9 @@ export default function VariantsSection({ form, set, colors, errors, number }: P
           {!form.isOneOfAKind && !usable && (
             <p className="text-muted">
               {form.sizes.length === 0 && form.colorIds.length === 0
-                ? "Choose the sizes and colours you have, then type how many pieces of each."
+                ? edit
+                  ? "Choose the sizes and colours this item comes in."
+                  : "Choose the sizes and colours you have, then type how many pieces of each."
                 : `Choose at least one ${form.sizes.length === 0 ? "size" : "colour"} to fill in pieces.`}
             </p>
           )}

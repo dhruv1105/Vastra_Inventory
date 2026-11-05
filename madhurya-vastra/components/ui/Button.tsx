@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type ReactNode } from "react";
 import Link, { type LinkProps } from "next/link";
 import { cn } from "@/lib/cn";
 import Loader from "./Loader";
@@ -70,7 +70,8 @@ export function LinkButton({
   className,
   children,
   ...rest
-}: LinkProps & { variant?: ButtonVariant; size?: ButtonSize; icon?: ReactNode; className?: string; children: ReactNode }) {
+}: LinkProps &
+  Pick<AnchorHTMLAttributes<HTMLAnchorElement>, "target" | "rel"> & { variant?: ButtonVariant; size?: ButtonSize; icon?: ReactNode; className?: string; children: ReactNode }) {
   return (
     <Link className={cn(base, variants[variant], sizes[size], className)} {...rest}>
       {icon}
