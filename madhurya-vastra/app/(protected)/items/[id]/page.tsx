@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Pencil, Share2, ShoppingBag } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import Section from "@/components/ui/Section";
@@ -17,6 +18,8 @@ import { useItem } from "@/hooks/useItem";
 import { formatDateTimeIST, formatINR, margin, timeAgo } from "@/lib/format";
 import { STATUS_BADGE } from "@/lib/inventory";
 import { cn } from "@/lib/cn";
+import { notShareableReason } from "@/lib/caption";
+import ShareSheet from "@/components/share/ShareSheet";
 
 // One item: photos, price (cost and margin for the owner only — the API never sends cost to
 // sellers), stock grid, details, who added / changed it, and the actions. Read-only; Edit opens the form.
@@ -26,6 +29,7 @@ const BACK = { href: "/inventory", label: "Inventory" };
 export default function ItemPage({ params }: { params: { id: string } }) {
   const { user } = useAuth();
   const { item, setItem, state, load } = useItem(params.id);
+  const [sharing, setSharing] = useState(false);
 
   const wrap = "mx-auto grid max-w-6xl grid-cols-1 gap-5 px-4 py-5 md:px-7 md:py-7";
 
@@ -60,6 +64,7 @@ export default function ItemPage({ params }: { params: { id: string } }) {
   const fromPrice = cheapest < item.sellingPrice ? cheapest : null;
   const cost = "costPrice" in item ? item.costPrice : undefined;
   const m = margin(item.sellingPrice, cost);
+  const cantShare = notShareableReason(item.status);
 
   return (
     <div className={wrap}>
@@ -148,10 +153,10 @@ export default function ItemPage({ params }: { params: { id: string } }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1">
-              <Button variant="secondary" icon={<Share2 />} disabled fullWidth>
+              <Button variant="secondary" icon={<Share2 />} disabled={!!cantShare} fullWidth onClick={() => setSharing(true)}>
                 Share
               </Button>
-              <span className="text-xs text-muted">Sending photos and price to WhatsApp or Instagram comes next.</span>
+              <span className="text-xs text-muted">{cantShare ?? "Photos and a ready caption to WhatsApp or Instagram."}</span>
             </div>
             <div className="grid gap-1">
               <Button variant="secondary" icon={<ShoppingBag />} disabled fullWidth>
@@ -167,6 +172,8 @@ export default function ItemPage({ params }: { params: { id: string } }) {
           </dl>
         </div>
       </div>
+
+      <ShareSheet open={sharing} onClose={() => setSharing(false)} item={item} />
     </div>
   );
 }
