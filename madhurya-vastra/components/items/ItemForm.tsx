@@ -16,10 +16,16 @@ import VariantsSection from "@/components/items/VariantsSection";
 import SectionNav, { jumpTo } from "@/components/items/SectionNav";
 import { ERROR_FOR, ERROR_TARGET, INITIAL_FORM, buildPayload, sectionDone, validate, type Errors, type FieldKey, type SectionKey } from "@/components/items/form";
 import { byName } from "@/components/lookups/lists";
-import { apiFetch } from "@/lib/api-client";
-import type { ItemFormData, LookupItem } from "@/types";
+import { apiFetch, onBeforeLoginRedirect } from "@/lib/api-client";
+import { saveDraft, takeDraft } from "@/lib/form-draft";
+import type { ImageFile, ItemFormData, LookupItem } from "@/types";
 
 type Lookups = { itemTypes: LookupItem[]; colors: LookupItem[]; occasions: LookupItem[]; tags: LookupItem[] };
+
+/** What is kept if the session ends mid-form: everything, photos as Files (previews are rebuilt). */
+type KeptForm = Omit<ItemFormData, "images"> & { images: Omit<ImageFile, "preview">[] };
+const DRAFT_KEY = "item-form:new";
+const isUntouched = (f: ItemFormData) => f.images.length === 0 && JSON.stringify({ ...f, images: [] }) === JSON.stringify(INITIAL_FORM);
 
 type Props = {
   /** "create" is Add Item (/items/new). Edit mode (/items/[id]/edit) is added with the edit page. */
@@ -47,6 +53,33 @@ export default function ItemForm({ mode }: Props) {
   const imagesRef = useRef(form.images);
   imagesRef.current = form.images;
   useEffect(() => () => imagesRef.current.forEach((i) => URL.revokeObjectURL(i.preview)), []);
+
+  // If the session ends (a 401 on save or on adding a type), keep the input for after sign-in…
+  const formRef = useRef(form);
+  formRef.current = form;
+  useEffect(() => {
+    if (!user) return;
+    return onBeforeLoginRedirect(() => {
+      const f = formRef.current;
+      if (isUntouched(f)) return;
+      const kept: KeptForm = { ...f, images: f.images.map(({ preview: _p, ...rest }) => (void _p, rest)) };
+      return saveDraft(DRAFT_KEY, user.id, kept);
+    });
+  }, [user]);
+
+  // …and bring it back here, for the same person only.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (!user || restored.current) return;
+    restored.current = true;
+    void takeDraft<KeptForm>(DRAFT_KEY, user.id).then((kept) => {
+      if (!kept) return;
+      setForm({ ...INITIAL_FORM, ...kept, images: kept.images.map((i) => ({ ...i, preview: URL.createObjectURL(i.file) })) });
+      showToast("Your sign-in had ended. Everything you typed is still here — check it and save again.", "info", { durationMs: 6000 });
+    });
+    // showToast is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const set = <K extends keyof ItemFormData>(key: K, value: ItemFormData[K]) => {
     setForm((f) => ({ ...f, [key]: value }));

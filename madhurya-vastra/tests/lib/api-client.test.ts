@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, NETWORK_ERROR, apiFetch } from "@/lib/api-client";
+import { ApiError, LOGIN_REDIRECT_WAIT_MS, NETWORK_ERROR, apiFetch, onBeforeLoginRedirect } from "@/lib/api-client";
 
 // apiFetch runs in the browser; here window.location and fetch are stand-ins.
 const assign = vi.fn();
@@ -24,6 +24,34 @@ describe("apiFetch", () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(assign).toHaveBeenCalledWith("/login?next=%2Fitems%2Fabc%3Ftab%3Dphotos");
     expect(settled).not.toHaveBeenCalled();
+  });
+
+  it("401 waits for registered savers (e.g. a form keeping its input) before going to sign-in", async () => {
+    vi.stubGlobal("fetch", respond(401, {}));
+    const order: string[] = [];
+    const off = onBeforeLoginRedirect(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+      order.push("saved");
+    });
+    assign.mockImplementation(() => order.push("redirect"));
+    apiFetch("/api/items");
+    await new Promise((r) => setTimeout(r, 80));
+    expect(order).toEqual(["saved", "redirect"]);
+    off();
+    assign.mockReset();
+  });
+
+  it("a saver that fails or hangs never blocks sign-in", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", respond(401, {}));
+    const offA = onBeforeLoginRedirect(() => { throw new Error("storage full"); });
+    const offB = onBeforeLoginRedirect(() => new Promise(() => {}));
+    apiFetch("/api/items");
+    await vi.advanceTimersByTimeAsync(LOGIN_REDIRECT_WAIT_MS + 10);
+    expect(assign).toHaveBeenCalledTimes(1);
+    offA();
+    offB();
+    vi.useRealTimers();
   });
 
   it("other failures throw ApiError with the server's sentence and status", async () => {

@@ -3,7 +3,9 @@
 // - Success: resolves with the response's `data`.
 // - 401 (session ended: expired, signed out elsewhere, password reset, account turned off):
 //   sends the browser to /login?next=<this page>, and never resolves, so the screen doesn't flash
-//   an error while the page changes. After signing in, ?next brings the person back.
+//   an error while the page changes. After signing in, ?next brings the person back. Screens that
+//   hold typed input register onBeforeLoginRedirect() to keep it; the redirect waits for them
+//   (at most LOGIN_REDIRECT_WAIT_MS).
 // - Any other failure: throws ApiError with the server's plain sentence and the status.
 // - Network failure: throws ApiError (status 0) with a connection message.
 // - Aborted (AbortSignal): rethrows the AbortError, which callers ignore.
@@ -25,6 +27,22 @@ export function loginRedirectUrl(location: Pick<Location, "pathname" | "search">
 
 export const isAbortError = (err: unknown) => (err as Error | null)?.name === "AbortError";
 
+export const LOGIN_REDIRECT_WAIT_MS = 1500;
+const beforeLogin = new Set<() => void | Promise<void>>();
+
+/** Run `fn` (e.g. keep a form's input) before a 401 sends the browser to sign-in. Returns an unregister function. */
+export function onBeforeLoginRedirect(fn: () => void | Promise<void>): () => void {
+  beforeLogin.add(fn);
+  return () => {
+    beforeLogin.delete(fn);
+  };
+}
+
+async function runBeforeLogin() {
+  const all = Promise.allSettled(Array.from(beforeLogin, (fn) => Promise.resolve().then(fn)));
+  await Promise.race([all, new Promise((r) => setTimeout(r, LOGIN_REDIRECT_WAIT_MS))]);
+}
+
 export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<T> {
   const headers = init.body !== undefined ? { "Content-Type": "application/json", ...init.headers } : init.headers;
   let res: Response;
@@ -35,6 +53,7 @@ export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<
     throw new ApiError(NETWORK_ERROR, 0);
   }
   if (res.status === 401) {
+    await runBeforeLogin();
     window.location.assign(loginRedirectUrl(window.location));
     return new Promise<T>(() => {}); // the page is changing; nothing to show
   }
