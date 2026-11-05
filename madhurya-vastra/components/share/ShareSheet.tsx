@@ -301,7 +301,7 @@ export default function ShareSheet({ open, onClose, item, templateId }: Props) {
       />
       {edited && (
         <div>
-          <Button variant="ghost" size="sm" icon={<RotateCcw />} onClick={() => setEdited(false)}>Start again from the caption</Button>
+          <Button variant="ghost" icon={<RotateCcw />} onClick={() => setEdited(false)}>Start again from the caption</Button>
         </div>
       )}
     </Dialog>

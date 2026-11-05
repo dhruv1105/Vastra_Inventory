@@ -141,7 +141,7 @@ export default function CaptionEditor({ open, kind, initial, previewWith, onSave
       />
       {isCaption && (
         <div>
-          <Button variant="ghost" size="sm" icon={<Braces />} onClick={insertTitle}>Insert item name</Button>
+          <Button variant="ghost" icon={<Braces />} onClick={insertTitle}>Insert item name</Button>
         </div>
       )}
 

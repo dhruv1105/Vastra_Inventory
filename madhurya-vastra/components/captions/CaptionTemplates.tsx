@@ -52,7 +52,7 @@ export default function CaptionTemplates({ templates, onAdd, onEdit, onMakeDefau
                 <h2 id={`captions-${g.kind}`} className="font-display text-xl text-fg">{g.title}</h2>
                 <p className="text-sm text-muted">{g.about}</p>
               </div>
-              <Button variant="secondary" size="sm" icon={<Plus />} onClick={() => onAdd(g.kind)}>{g.add}</Button>
+              <Button variant="secondary" icon={<Plus />} onClick={() => onAdd(g.kind)}>{g.add}</Button>
             </div>
 
             {rows.length === 0 ? (
