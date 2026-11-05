@@ -8,6 +8,7 @@ import Button from "@/components/ui/Button";
 import { TextField } from "@/components/ui/Input";
 import { useToast } from "@/context/ToastContext";
 import type { ImageFile } from "@/types";
+import { HIT_AREA } from "@/components/ui/hitArea";
 
 export const MAX_IMAGES = 8;
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -120,7 +121,7 @@ export default function PhotosSection({ images, onChange, number }: Props) {
                 type="button"
                 onClick={() => remove(img.id)}
                 aria-label={`Remove photo ${i + 1}`}
-                className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-fg/60 text-canvas hover:bg-fg/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft"
+                className={`absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-fg/60 ${HIT_AREA} text-canvas hover:bg-fg/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-soft`}
               >
                 <X aria-hidden="true" className="h-4 w-4" />
               </button>

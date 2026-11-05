@@ -49,6 +49,43 @@ describe("POST /api/items", () => {
   });
 });
 
+describe("POST /api/items — design colours", () => {
+  beforeEach(() => reset(OWNER));
+  const RED = "c0000000-0000-4000-8000-000000000001";
+
+  it("stores each design colour once", async () => {
+    results.push({ match: "INSERT INTO items", rows: [{ id: ID, title: "x", status: "active" }] });
+    const res = await items.POST(req("POST", "/api/items", { body: body({ designColorIds: [RED, RED] }) }));
+    expect(res.status).toBe(201);
+    expect(sqlLike("INSERT INTO item_colors").map(([, p]) => p)).toEqual([[ID, RED, OWNER.id]]);
+  });
+
+  it("a design colour that isn't an id → 400", async () => {
+    const res = await items.POST(req("POST", "/api/items", { body: body({ designColorIds: ["red"] }) }));
+    expect(res.status).toBe(400);
+    expect(sqlLike("INSERT")).toHaveLength(0);
+  });
+});
+
+describe("POST /api/items — sizes", () => {
+  beforeEach(() => reset(OWNER));
+  const okInsert = () => results.push({ match: "INSERT INTO items", rows: [{ id: ID, title: "x", status: "active" }] });
+
+  it("normalises sizes before saving (\"xl\" → \"XL\", \" free  size \" → \"Free Size\")", async () => {
+    okInsert();
+    const res = await items.POST(req("POST", "/api/items", { body: body({ variants: [{ size: "xl", colorId: null, quantity: 1 }, { size: " free  size ", colorId: ID, quantity: 1 }] }) }));
+    expect(res.status).toBe(201);
+    expect(sqlLike("INSERT INTO variants").map(([, p]) => p![1])).toEqual(["XL", "Free Size"]);
+  });
+
+  it("the same size twice for one colour (any case/spacing) → 400 with a clear message, runs no SQL", async () => {
+    const res = await items.POST(req("POST", "/api/items", { body: body({ variants: [{ size: "M", colorId: ID, quantity: 1 }, { size: " m ", colorId: ID, quantity: 2 }] }) }));
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/Each size and colour can appear only once/);
+    expect(calls).toHaveLength(0);
+  });
+});
+
 describe("POST /api/items — one-of-a-kind flag", () => {
   beforeEach(() => reset(OWNER));
   const oneOff = (extra: object = {}) =>
@@ -84,28 +121,82 @@ describe("POST /api/items — one-of-a-kind flag", () => {
 });
 
 describe("GET /api/items/[id]", () => {
-  beforeEach(() => {
-    reset(null);
-  });
-  const withItem = () => results.push({ match: "FROM items i", rows: [{ id: ID, title: "x", costPrice: 1200, sellingPrice: 1999 }] });
+  beforeEach(() => reset(null));
+  const get = () => item.GET(req("GET", `/api/items/${ID}`), ctx(ID));
+  const withItem = () => {
+    results.push({
+      match: "FROM items i",
+      rows: [
+        {
+          id: ID, title: "x", costPrice: 1200, sellingPrice: 1999, isOneOfAKind: false, status: "active",
+          version: "2026-10-18 06:12:00.123456+00",
+          createdBy: { id: OWNER.id, name: "Owner" }, updatedBy: { id: SELLER.id, name: "Seller" },
+        },
+      ],
+    });
+    results.push({ match: "FROM variants v", rows: [{ id: "v1", size: "M", quantity: 2, sellingPriceOverride: 1799, costPriceOverride: 900 }] });
+  };
 
-  it("without a session → 401", async () => {
-    expect((await item.GET(req("GET", `/api/items/${ID}`), ctx(ID))).status).toBe(401);
+  it("without a session → 401, runs no SQL", async () => {
+    expect((await get()).status).toBe(401);
+    expect(calls).toHaveLength(0);
   });
 
-  it("as a seller: no cost price in the response", async () => {
+  it("malformed id → 400, unknown → 404", async () => {
+    reset(OWNER);
+    expect((await item.GET(req("GET", "/api/items/nope"), ctx("nope"))).status).toBe(400);
+    expect((await get()).status).toBe(404);
+  });
+
+  it("as a seller: no cost anywhere — not the item's, not a variant's", async () => {
     reset(SELLER);
     withItem();
-    const json = await (await item.GET(req("GET", `/api/items/${ID}`), ctx(ID))).json();
+    const json = await (await get()).json();
     expect(json.data).not.toHaveProperty("costPrice");
+    expect(json.data.variants[0]).not.toHaveProperty("costPriceOverride");
+    expect(json.data.variants[0].sellingPriceOverride).toBe(1799);
+    expect(JSON.stringify(json)).not.toMatch(/cost/i);
     expect(json.data.sellingPrice).toBe(1999);
   });
 
-  it("as the owner: cost price included", async () => {
+  it("seller view is an allowlist: a column added to the query later doesn't reach sellers", async () => {
+    reset(SELLER);
+    withItem();
+    (results[0].rows[0] as Record<string, unknown>).supplierNote = "bought at Surat";
+    (results[1].rows[0] as Record<string, unknown>).supplierCode = "SRT-9";
+    const { data } = await (await get()).json();
+    expect(data).not.toHaveProperty("supplierNote");
+    expect(data.variants[0]).not.toHaveProperty("supplierCode");
     reset(OWNER);
     withItem();
-    const json = await (await item.GET(req("GET", `/api/items/${ID}`), ctx(ID))).json();
+    (results[0].rows[0] as Record<string, unknown>).supplierNote = "bought at Surat";
+    expect((await (await get()).json()).data.supplierNote).toBe("bought at Surat");
+  });
+
+  it("as the owner: item and variant cost included", async () => {
+    reset(OWNER);
+    withItem();
+    const json = await (await get()).json();
     expect(json.data.costPrice).toBe(1200);
+    expect(json.data.variants[0].costPriceOverride).toBe(900);
+  });
+
+  it("returns the concurrency version (exact text) and who added / last changed it", async () => {
+    reset(SELLER);
+    withItem();
+    const { data } = await (await get()).json();
+    expect(data.version).toBe("2026-10-18 06:12:00.123456+00");
+    expect(data.createdBy).toEqual({ id: OWNER.id, name: "Owner" });
+    expect(data.updatedBy).toEqual({ id: SELLER.id, name: "Seller" });
+    expect(sqlLike("FROM items i")[0][0]).toContain('i.updated_at::text AS "version"');
+  });
+
+  it("only live variants and photos", async () => {
+    reset(OWNER);
+    withItem();
+    await get();
+    expect(sqlLike("FROM variants v")[0][0]).toContain("v.deleted_at IS NULL");
+    expect(sqlLike("FROM images")[0][0]).toContain("deleted_at IS NULL");
   });
 });
 

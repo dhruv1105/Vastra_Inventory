@@ -17,7 +17,8 @@ export type LookupConfig = {
 
 const NAME_MAX = 50;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
-const columns = (c: LookupConfig) => `id, name, ${c.hasColor ? 'hex_code AS "hexCode", ' : ""}created_at AS "createdAt"`;
+const columns = (c: LookupConfig) =>
+  `id, name, ${c.hasColor ? 'hex_code AS "hexCode", hex_code_2 AS "hexCode2", ' : ""}created_at AS "createdAt"`;
 const isUniqueViolation = (e: unknown) => !!e && typeof e === "object" && "code" in e && (e as { code: string }).code === "23505";
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -37,8 +38,9 @@ function validate(c: LookupConfig, body: Record<string, unknown>, partial: boole
     if (typeof name !== "string" || !name.trim()) return partial ? "Name cannot be empty" : "Name is required";
     if (name.trim().length > NAME_MAX) return `Name must be ${NAME_MAX} characters or less`;
   }
-  if (c.hasColor && body.hexCode != null && body.hexCode !== "" && !(typeof body.hexCode === "string" && HEX.test(body.hexCode))) {
-    return "Hex code must be in #RRGGBB format";
+  for (const key of ["hexCode", "hexCode2"]) {
+    const v = body[key];
+    if (c.hasColor && v != null && v !== "" && !(typeof v === "string" && HEX.test(v))) return "Hex code must be in #RRGGBB format";
   }
   return null;
 }
@@ -90,9 +92,9 @@ export function lookupCollection(c: LookupConfig) {
       try {
         const row = await write(
           c.hasColor
-            ? `INSERT INTO ${c.table} (name, hex_code, created_by, updated_by) VALUES ($1, $2, $3, $3) RETURNING ${columns(c)}`
+            ? `INSERT INTO ${c.table} (name, hex_code, hex_code_2, created_by, updated_by) VALUES ($1, $2, $3, $4, $4) RETURNING ${columns(c)}`
             : `INSERT INTO ${c.table} (name, created_by, updated_by) VALUES ($1, $2, $2) RETURNING ${columns(c)}`,
-          c.hasColor ? [name, (body.hexCode as string) || null, g.user.id] : [name, g.user.id],
+          c.hasColor ? [name, (body.hexCode as string) || null, (body.hexCode2 as string) || null, g.user.id] : [name, g.user.id],
           { actor: g.user.id, action: `${c.table}.created`, payload: { name } },
         );
         return NextResponse.json({ data: row }, { status: 201 });
@@ -120,11 +122,15 @@ export function lookupItem(c: LookupConfig) {
           c.hasColor
             ? `UPDATE ${c.table} SET name = COALESCE($1, name),
                  hex_code = CASE WHEN $2::text IS NOT NULL THEN $2::text ELSE hex_code END,
+                 hex_code_2 = CASE WHEN $5::boolean THEN $6::text ELSE hex_code_2 END,
                  updated_by = $3, updated_at = NOW()
                WHERE id = $4 AND deleted_at IS NULL RETURNING ${columns(c)}`
             : `UPDATE ${c.table} SET name = COALESCE($1, name), updated_by = $2, updated_at = NOW()
                WHERE id = $3 AND deleted_at IS NULL RETURNING ${columns(c)}`,
-          c.hasColor ? [name, (body.hexCode as string) || null, g.user.id, params.id] : [name, g.user.id, params.id],
+          c.hasColor
+            ? // hexCode2: left out → kept; null or "" → cleared (no longer a combination); a code → set.
+              [name, (body.hexCode as string) || null, g.user.id, params.id, body.hexCode2 !== undefined, (body.hexCode2 as string) || null]
+            : [name, g.user.id, params.id],
           { actor: g.user.id, action: `${c.table}.updated`, payload: { name } },
         );
         if (!row) return bad(`${capital(c.noun)} not found`, 404);

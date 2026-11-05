@@ -62,7 +62,7 @@ export default function ManageListsPage() {
   const put = (key: ListKey, next: LookupItem[]) => setData((d) => ({ ...d, [key]: [...next].sort(byName) }));
 
   const body = (draft: LookupDraft) =>
-    JSON.stringify({ name: draft.name, ...(list.hasColor ? { hexCode: draft.hexCode || null } : {}) });
+    JSON.stringify({ name: draft.name, ...(list.hasColor ? { hexCode: draft.hexCode || null, hexCode2: draft.hexCode2 || null } : {}) });
 
   const create = async (draft: LookupDraft) => {
     const item = await lookupRequest<LookupItem>(`/api/lookups/${list.endpoint}`, { method: "POST", body: body(draft) });
