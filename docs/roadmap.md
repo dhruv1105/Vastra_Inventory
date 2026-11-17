@@ -47,7 +47,9 @@ an item is added and nothing can change it afterwards.
    item, correct a wrong count with a reason (damaged, lost, miscount). This is also how the
    shop's existing stock gets in before go-live.
 9. **Mark as sold** — record a sale against a variant through the ledger: price actually charged,
-   discount, cash / UPI, who sold it; undo for a mistaken tap. Sales get their own table so later
+   discount, who sold it; undo for a mistaken tap. Payment is cash, UPI, or part cash and part
+   UPI on one sale (no card — owner, 2026-11-17); refunds and exchange differences in step 10
+   record the mode the same way. Sales get their own table so later
    steps can point at a sale.
 10. **Returns and exchanges** — a customer brings a piece back. Find the sale, pick the piece,
     then either **return** (piece goes back on the shelf or is marked damaged; money handed back
