@@ -14,6 +14,10 @@ Follow `.claude/rules.md`. Do the steps in order and stop at each approval point
 3. **Write the brief** (rules §1.2): who uses it and on which device, the problem, how we know it
    worked, acceptance criteria incl. edge cases (empty, no permission, invalid input, two people
    editing, large list).
+   Name the **outside check**: one thing other than Claude's own testing that proves it works —
+   a real phone, a shelf count, a week of real use, the owner doing the task unaided. If there
+   is none, say so. The feature is not called done until that check has been run or is listed
+   as "not verified".
 4. **Write the plan**: screens, components (kit pieces reused or added), API routes, DB changes,
    steps — one commit each. List anything that changes existing behaviour.
 5. **STOP — ask the user to approve the brief and plan.** Ask about anything unclear.

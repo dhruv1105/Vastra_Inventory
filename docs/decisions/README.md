@@ -31,3 +31,11 @@ Format: date · decision · why · what it rules out.
 - **2026-10-17 · Target: stock as a movement ledger** (purchase, sale, return, adjustment),
   current quantity derived. Needed before Sales. Rules out: editing `variants.quantity` directly
   from new features.
+- **2026-11-17 · True stock before reach.** The ledger, mark as sold, returns/exchanges and a
+  stock count are built before the Meta integrations. Stock is fixed at creation today, so the
+  app goes wrong on the first real sale, and one-tap posts or automatic DMs would quote sizes
+  already sold. Hosting gains backups, a tried restore and error alerts. Rules out: Instagram /
+  WhatsApp automation before a shelf count has matched the app.
+- **2026-11-17 · A return points at its sale.** Returns and exchanges are ledger rows linked to
+  the original sale (an exchange = that return + a new sale in one action), never an edit or
+  deletion of the sale. Rules out: "fixing" a sale by changing its rows; negative sales.

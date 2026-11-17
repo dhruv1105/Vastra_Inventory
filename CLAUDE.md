@@ -20,7 +20,8 @@ The inventory list is done ([docs/plans/inventory-list.md](docs/plans/inventory-
 Item detail + edit is done ([docs/plans/item-detail.md](docs/plans/item-detail.md)).
 Caption templates + sharing is done ([docs/plans/sharing.md](docs/plans/sharing.md)): the phone's share
 menu only — automatic Instagram/WhatsApp (Meta APIs) is roadmap step 6, after hosting.
-Next, per the [roadmap](docs/roadmap.md): CI (GitHub Actions).
+Next, per the [roadmap](docs/roadmap.md) (reordered 2026-11-17: true stock before Meta): sharing checked on
+a real phone (`phone-test` skill), then CI (GitHub Actions).
 
 Full brief: [docs/brief.md](docs/brief.md).
 
@@ -157,6 +158,7 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 | `redesign-method` | Working on the UI redesign (any `docs/redesign/` step) |
 | `vastra-domain` | Anything touching items, variants, lists, stock, prices |
 | `api-route` | Writing or changing anything under `app/api/` |
+| `phone-test` | Checking a feature on a real phone over HTTPS (tunnel to the dev stack) |
 
 Subagents in `.claude/agents/`: `checker` (type check/lint/build, reports failures),
 `code-scout` (read-only search), `ui-snapshot` (screenshots at the 4 device sizes). Use them

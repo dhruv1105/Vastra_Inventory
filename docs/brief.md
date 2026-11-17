@@ -25,11 +25,13 @@ WhatsApp/Instagram through the phone's share menu (captions and shop details on 
 Share on the item page and inventory cards), responsive shell (header,
 collapsible sidebar, bottom nav), all on the redesigned UI kit.
 
-To build, in order (see [roadmap.md](roadmap.md)): CI (GitHub Actions) → S3 photo storage +
-hosting → Meta integrations (Instagram posting, comment auto-DMs, WhatsApp catalogue) →
-stock-movement ledger → mark as sold → dashboard + activity log.
+To build, in order (see [roadmap.md](roadmap.md)): sharing checked on a real phone + CI →
+photo storage (S3) + hosting with backups → stock-movement ledger → adjust / receive stock →
+mark as sold → returns and exchanges → stock count → search by colour and type → dashboard +
+activity log → QR labels → Meta integrations (Instagram posting, comment auto-DMs, WhatsApp
+catalogue).
 
-**Current step: CI.**
+**Current step: sharing on a real phone, then CI.**
 
 ## Phase 2 — customers
 
