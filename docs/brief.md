@@ -39,6 +39,10 @@ Storefront (web + installable PWA), cart, orders, customer accounts, online paym
 status. Same Next.js app and API; customer screens in their own route group. Motion
 (Lenis/GSAP/React Bits) lives here only.
 
+Places to borrow storefront UI ideas from (adapt to our tokens and kit; no second animation
+library — GSAP is already installed): kokonutui.com (components), ui.bklit.com (charts, also
+for the owner's dashboard), motion.dev and animejs.com (motion ideas), v0.dev (quick mock-ups).
+
 ## Out of scope (for now)
 Multiple branches, GST invoicing integration, marketplace sync, loyalty programme.
 

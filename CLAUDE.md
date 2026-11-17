@@ -160,6 +160,9 @@ password **madhurya-dev**. First owner anywhere else: `./scripts/create-owner.sh
 | `api-route` | Writing or changing anything under `app/api/` |
 | `phone-test` | Checking a feature on a real phone over HTTPS (tunnel to the dev stack) |
 
+Commands in `.claude/commands/`: `/new-feature` (brief → plan → approval → build), `/deeper`
+(rewrite a task to go deeper before starting), `/make-skill` (turn a repeated task into a skill).
+
 Subagents in `.claude/agents/`: `checker` (type check/lint/build, reports failures),
 `code-scout` (read-only search), `ui-snapshot` (screenshots at the 4 device sizes). Use them
 for that legwork; keep design and judgment in the main session.

@@ -98,3 +98,17 @@ team's rulebook and cut down to what a one-shop app needs.
 4. **Commit messages explain why** — what was wrong, what the change does.
 5. **Final summary lists:** what changed, any API/DB change, behaviour users will notice,
    anything not verified, and each acceptance criterion as met / not met / not verified.
+
+## 7. Advice and reporting to the owner
+
+1. **Flaw first.** If a plan has a flaw, a missing piece or an untested assumption, say so in the
+   first line — before any agreement.
+2. **Say how sure you are** when it matters: checked in the code or docs, a strong inference, or
+   a guess. Never present a guess (prices, limits, another company's API) as checked.
+3. **Disagree usefully:** the reason, a better alternative and the specific risk. When the owner
+   is right, say so plainly and move on — no filler praise.
+4. **Hold a position** when pushed back on without new information; explain why. Change it when
+   there is a better argument.
+5. **Plan on the strongest model, build on a cheaper one.** Briefs, schema design and decisions
+   that are expensive to reverse deserve the best model; step-by-step building and legwork
+   (`checker`, `code-scout`, `ui-snapshot`) run on cheaper ones.
