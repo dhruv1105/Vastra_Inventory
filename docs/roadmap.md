@@ -60,11 +60,11 @@ an item is added and nothing can change it afterwards.
     - **Within 3 days of the sale**, and the number of days is a setting the owner can change.
     - **A returned piece in the same condition goes back on sale**, and its price may be changed;
       otherwise it is marked damaged and stays off the shelf.
-    - **Sale not recorded in the app** (proposed, owner to confirm): still allowed — the seller
+    - **Sale not recorded in the app:** still allowed — the seller
       picks the piece from inventory and enters the price paid from the bill; it is saved as a
       "return without a recorded sale", flagged for the owner, and counted on the dashboard.
-    - Proposed, owner to confirm: sellers do exchanges; money back and returns after the
-      allowed days need the owner.
+    - **Who can do what:** sellers do exchanges on their own; money back and returns after the
+      allowed days need an owner.
 11. **Stock count** — month-end count on the phone: walk the shelf, enter what is there, review
     the differences, confirm → adjustment rows. This is the outside check for the whole phase:
     after a week of real sales, the count matches the app.
