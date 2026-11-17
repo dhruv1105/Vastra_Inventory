@@ -53,10 +53,16 @@ an item is added and nothing can change it afterwards.
     then either **return** (piece goes back on the shelf or is marked damaged; money handed back
     is recorded) or **exchange** (the return plus a new sale in one action; the difference to pay
     or refund is shown and recorded). Every return keeps its link to the original sale, a reason
-    and who handled it, so the day's total and the dashboard stay true. To settle in its brief
-    with the owner: the shop's policy (refund, exchange only, or credit for later), how many days
-    after the sale, what happens when the sale was never recorded in the app, and whether a
-    returned piece can go back on sale at a different price.
+    and who handled it, so the day's total and the dashboard stay true. Agreed with the owner (2026-11-17):
+    - **Exchange first.** Exchange is the normal outcome; money back is the last resort.
+    - **Within 3 days of the sale**, and the number of days is a setting the owner can change.
+    - **A returned piece in the same condition goes back on sale**, and its price may be changed;
+      otherwise it is marked damaged and stays off the shelf.
+    - **Sale not recorded in the app** (proposed, owner to confirm): still allowed — the seller
+      picks the piece from inventory and enters the price paid from the bill; it is saved as a
+      "return without a recorded sale", flagged for the owner, and counted on the dashboard.
+    - Proposed, owner to confirm: sellers do exchanges; money back and returns after the
+      allowed days need the owner.
 11. **Stock count** — month-end count on the phone: walk the shelf, enter what is there, review
     the differences, confirm → adjustment rows. This is the outside check for the whole phase:
     after a week of real sales, the count matches the app.
